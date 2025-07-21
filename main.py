@@ -7,6 +7,7 @@ from components.trudiagnostic_tab import trudiagnostic_tab
 from components.biostarks_tab import biostarks_tab
 from components.surveys_tab import surveys_tab
 from components.interventions_tab import interventions_tab
+from components.clinical_intake_tab import clinical_intake_tab
 # Import other tab components as you modularize them
 
 def main():
@@ -27,6 +28,7 @@ def main():
     if not auth_status:
         st.stop()
     tab_names = [
+        "Clinical Intake",
         "Function Health",
         "Thorne",
         "Prenuvo",
@@ -37,18 +39,20 @@ def main():
     ]
     tabs = st.tabs(tab_names)
     with tabs[0]:
-        function_health_tab(username)
+        clinical_intake_tab(username)
     with tabs[1]:
-        thorne_tab(username)
+        function_health_tab(username)
     with tabs[2]:
-        prenuvo_tab(username)
+        thorne_tab(username)
     with tabs[3]:
-        trudiagnostic_tab(username)
+        prenuvo_tab(username)
     with tabs[4]:
-        biostarks_tab(username)
+        trudiagnostic_tab(username)
     with tabs[5]:
-        surveys_tab(username)
+        biostarks_tab(username)
     with tabs[6]:
+        surveys_tab(username)
+    with tabs[7]:
         interventions_tab(username)
     # Add other tab calls as you modularize them
 
