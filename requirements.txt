@@ -8,3 +8,4 @@ streamlit-authenticator==0.4.2
 supabase==1.2.0
 PyMuPDF==1.25.5
 PyYAML==6.0.2
+beautifulsoup4==4.12.3
