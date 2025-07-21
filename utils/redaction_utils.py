@@ -37,8 +37,24 @@ def redact_prenuvo_pdf(input_path, output_path):
     doc.save(output_path)
     doc.close()
 
+def remove_leading_sparse_page(doc, min_lines=5):
+    if len(doc) > 1:
+        first_page = doc[0]
+        text = first_page.get_text().strip()
+        if len(text.splitlines()) < min_lines:
+            doc.delete_page(0)
+
+
 def redact_trudiagnostic_pdf(input_path, output_path):
     doc = fitz.open(input_path)
+    # Remove first page if it is mostly blank (fewer than 5 lines)
+    remove_leading_sparse_page(doc, min_lines=5)
+    # Read names to redact from redact_names.txt
+    try:
+        with open('redact_names.txt', 'r') as f:
+            names_to_redact = [line.strip() for line in f if line.strip()]
+    except FileNotFoundError:
+        names_to_redact = []
     for i, page in enumerate(doc):
         if i == 0:
             body_patterns = [
@@ -69,6 +85,10 @@ def redact_trudiagnostic_pdf(input_path, output_path):
         for block in page.get_text("blocks"):
             if "PROVIDED BY:" in block[4] or "trudiagnostic.com" in block[4] or "trudiagnostic/apireports.aspx" in block[4]:
                 rect = fitz.Rect(block[:4])
+                page.add_redact_annot(rect, fill=(0, 0, 0))
+        # Redact any name from the fallback list
+        for name in names_to_redact:
+            for rect in page.search_for(name):
                 page.add_redact_annot(rect, fill=(0, 0, 0))
         page.apply_redactions()
     doc.save(output_path)
