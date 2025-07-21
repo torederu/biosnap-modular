@@ -1,0 +1,8 @@
+.DS_Store
+.env
+__pycache__/
+*.pyc
+.scrape-env/
+.learn-env/
+.ipynb_checkpoints/
+config.yaml
