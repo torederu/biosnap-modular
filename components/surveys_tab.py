@@ -13,4 +13,4 @@ def surveys_tab(username):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(behavior_scores_df)
     except Exception as e:
-        st.info("There was an error retrieving your behavioral data. Please contact admin.") 
+        st.info("There was an error retrieving your survey data. Please contact admin.") 

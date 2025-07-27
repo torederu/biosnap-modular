@@ -44,7 +44,6 @@ def remove_leading_sparse_page(doc, min_lines=5):
         if len(text.splitlines()) < min_lines:
             doc.delete_page(0)
 
-
 def redact_trudiagnostic_pdf(input_path, output_path):
     doc = fitz.open(input_path)
     # Remove first page if it is mostly blank (fewer than 5 lines)
