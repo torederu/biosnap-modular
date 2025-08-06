@@ -32,8 +32,7 @@ def main():
         "Clinical Intake",
         "Lifestyle",
         "Function Health",
-        "Thorne 1",
-        "Thorne 2",
+        "Thorne",
         "Prenuvo",
         "Trudiagnostic",
         "Biostarks",
@@ -48,18 +47,20 @@ def main():
     with tabs[2]:
         function_health_tab(username)
     with tabs[3]:
-        thorne_tab(username)
+        thorne_subtabs = st.tabs(["Thorne Overview", "Thorne Community Report"])
+        with thorne_subtabs[0]:
+            thorne_tab(username)
+        with thorne_subtabs[1]:
+            thorne2_tab(username)
     with tabs[4]:
-        thorne2_tab(username)
-    with tabs[5]:
         prenuvo_tab(username)
-    with tabs[6]:
+    with tabs[5]:
         trudiagnostic_tab(username)
-    with tabs[7]:
+    with tabs[6]:
         biostarks_tab(username)
-    with tabs[8]:
+    with tabs[7]:
         surveys_tab(username)
-    with tabs[9]:
+    with tabs[8]:
         interventions_tab(username)
 
 if __name__ == "__main__":
