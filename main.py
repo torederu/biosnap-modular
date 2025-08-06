@@ -9,6 +9,7 @@ from components.surveys_tab import surveys_tab
 from components.interventions_tab import interventions_tab
 from components.clinical_intake_tab import clinical_intake_tab
 from components.lifestyle_tab import lifestyle_tab
+from components.thorne2_tab import thorne2_tab
 
 def main():
     st.set_page_config(page_title="Biometric Snapshot", layout="centered")
@@ -31,7 +32,8 @@ def main():
         "Clinical Intake",
         "Lifestyle",
         "Function Health",
-        "Thorne",
+        "Thorne 1",
+        "Thorne 2",
         "Prenuvo",
         "Trudiagnostic",
         "Biostarks",
@@ -48,14 +50,16 @@ def main():
     with tabs[3]:
         thorne_tab(username)
     with tabs[4]:
-        prenuvo_tab(username)
+        thorne2_tab(username)
     with tabs[5]:
-        trudiagnostic_tab(username)
+        prenuvo_tab(username)
     with tabs[6]:
-        biostarks_tab(username)
+        trudiagnostic_tab(username)
     with tabs[7]:
-        surveys_tab(username)
+        biostarks_tab(username)
     with tabs[8]:
+        surveys_tab(username)
+    with tabs[9]:
         interventions_tab(username)
 
 if __name__ == "__main__":

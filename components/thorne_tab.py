@@ -27,7 +27,7 @@ def thorne_tab(username):
         except Exception:
             st.session_state.thorne_csv_ready = False
     
-    st.markdown("<h1>Thorne Gut Health</h1>", unsafe_allow_html=True)
+    st.markdown("<h1>Thorne Overview</h1>", unsafe_allow_html=True)
     
     if st.session_state.get("deleting_thorne_in_progress", False):
         with st.spinner("Deleting file from database..."):
