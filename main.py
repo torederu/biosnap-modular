@@ -11,6 +11,13 @@ from components.clinical_intake_tab import clinical_intake_tab
 from components.lifestyle_tab import lifestyle_tab
 from components.thorne2_tab import thorne2_tab
 
+# New placeholder tabs
+from components.toxicology_tab import toxicology_tab
+from components.matter_overview_tab import matter_overview_tab
+from components.matter_memory_ratings_tab import matter_memory_ratings_tab
+from components.hri_tab import hri_tab
+from components.oprl_tab import oprl_tab
+
 def main():
     st.set_page_config(page_title="Biometric Snapshot", layout="centered")
     authenticator = get_authenticator()
@@ -28,39 +35,74 @@ def main():
             authenticator.logout("Logout", location='main')
     if not auth_status:
         st.stop()
-    tab_names = [
-        "Clinical Intake",
-        "Lifestyle",
-        "Function Health",
-        "Thorne",
-        "Prenuvo",
-        "Trudiagnostic",
-        "Biostarks",
-        "Surveys",
+
+    # Five main tabs
+    main_tab_names = [
+        "Screening",
+        "Labs",
+        "Emotion & Cognition",
+        "Habits & Performance",
         "Interventions"
     ]
-    tabs = st.tabs(tab_names)
-    with tabs[0]:
-        clinical_intake_tab(username)
-    with tabs[1]:
-        lifestyle_tab(username)
-    with tabs[2]:
-        function_health_tab(username)
-    with tabs[3]:
-        thorne_subtabs = st.tabs(["Thorne Overview", "Thorne Community Report"])
-        with thorne_subtabs[0]:
+    main_tabs = st.tabs(main_tab_names)
+
+    # Screening
+    with main_tabs[0]:
+        screening_tabs = st.tabs(["Clinical Intake", "Toxicology", "Prenuvo"])
+        with screening_tabs[0]:
+            clinical_intake_tab(username)
+        with screening_tabs[1]:
+            toxicology_tab(username)
+        with screening_tabs[2]:
+            prenuvo_tab(username)
+
+    # Labs
+    with main_tabs[1]:
+        labs_tabs = st.tabs([
+            "Function Health",
+            "Biostarks",
+            "Trudiagnostic",
+            "Thorne Overview",
+            "Thorne Community Report"
+        ])
+        with labs_tabs[0]:
+            function_health_tab(username)
+        with labs_tabs[1]:
+            biostarks_tab(username)
+        with labs_tabs[2]:
+            trudiagnostic_tab(username)
+        with labs_tabs[3]:
             thorne_tab(username)
-        with thorne_subtabs[1]:
+        with labs_tabs[4]:
             thorne2_tab(username)
-    with tabs[4]:
-        prenuvo_tab(username)
-    with tabs[5]:
-        trudiagnostic_tab(username)
-    with tabs[6]:
-        biostarks_tab(username)
-    with tabs[7]:
-        surveys_tab(username)
-    with tabs[8]:
+
+    # Emotion & Cognition
+    with main_tabs[2]:
+        ec_tabs = st.tabs([
+            "Matter Overview",
+            "Matter Memory Ratings",
+            "HRI",
+            "Surveys"
+        ])
+        with ec_tabs[0]:
+            matter_overview_tab(username)
+        with ec_tabs[1]:
+            matter_memory_ratings_tab(username)
+        with ec_tabs[2]:
+            hri_tab(username)
+        with ec_tabs[3]:
+            surveys_tab(username)
+
+    # Habits & Performance
+    with main_tabs[3]:
+        hp_tabs = st.tabs(["Lifestyle", "OPRL"])
+        with hp_tabs[0]:
+            lifestyle_tab(username)
+        with hp_tabs[1]:
+            oprl_tab(username)
+
+    # Interventions
+    with main_tabs[4]:
         interventions_tab(username)
 
 if __name__ == "__main__":

@@ -97,7 +97,7 @@ def prenuvo_tab(username):
         </div>
         """, unsafe_allow_html=True)
         st.markdown("<div style='font-size:17.5px; line-height:1.6'>We will redact sensitive information and prepare a version for your review.</div>", unsafe_allow_html=True)
-        uploaded = st.file_uploader("", type="pdf")
+        uploaded = st.file_uploader("", type="pdf", key="prenuvo_upload")
         if uploaded:
             with st.spinner("Redacting sensitive information..."):
                 input_path = "/tmp/prenuvo_original.pdf"

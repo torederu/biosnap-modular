@@ -6,20 +6,19 @@ from supabase_utils import get_user_supabase
 def thorne2_tab(username):
     st.markdown("<h1>Thorne Community Report</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
-    filename = f"{username}/thorne2_data.csv"
+    filename = f"{username}/thorne2.csv"
     bucket = user_supabase.storage.from_("data")
     file_list = bucket.list(path=username)
-    file_exists = any(f["name"] == "thorne2_data.csv" for f in file_list)
+    file_exists = any(f["name"] == "thorne2.csv" for f in file_list)
     
     if file_exists:
-        st.success("Your Thorne Community Report data has been uploaded successfully!")
         try:
             csv_bytes = bucket.download(filename)
             if isinstance(csv_bytes, bytes):
                 df = pd.read_csv(io.BytesIO(csv_bytes))
                 st.markdown("Double-click any cell to reveal its full contents.")
                 st.dataframe(df)
-                st.download_button("Download CSV", csv_bytes, file_name="thorne2_data.csv")
+                st.success("Upload successful!")
             else:
                 st.error("Failed to retrieve the file. Please try again.")
         except Exception as e:
@@ -38,13 +37,13 @@ def thorne2_tab(username):
         </div>
         """, unsafe_allow_html=True)
         
-        uploaded = st.file_uploader("", type="csv")
+        uploaded = st.file_uploader("", type="csv", key="thorne2_upload")
         if uploaded:
             with st.spinner("Uploading your Thorne Community Report data..."):
                 try:
                     csv_content = uploaded.read()
                     bucket.upload(filename, csv_content, {"content-type": "text/csv"})
-                    st.success("File uploaded successfully!")
+                    st.success("Upload successful!")
                     st.rerun()
                 except Exception as e:
                     st.error(f"Failed to upload file: {e}") 

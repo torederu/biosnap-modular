@@ -111,6 +111,4 @@ def biostarks_tab(username):
     else:
         st.dataframe(st.session_state.biostarks_df)
         st.success("Upload successful!")
-        if st.button("Start Over", key="reset_biostarks"):
-            st.session_state.reset_biostarks = True
-            st.rerun() 
+        # Removed Start Over button 

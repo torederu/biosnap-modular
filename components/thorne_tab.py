@@ -65,10 +65,6 @@ def thorne_tab(username):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(st.session_state.thorne_df)
         st.success("Import successful!")
-        time.sleep(1)
-        if st.button("Start Over", key="reset_thorne"):
-            st.session_state.deleting_thorne_in_progress = True
-            st.rerun()
     else:
         st.markdown("""
     <div style='font-size:17.5px; line-height:1.6'>

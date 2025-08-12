@@ -62,9 +62,6 @@ def function_health_tab(username):
     elif st.session_state.get("function_csv_ready") and "function_df" in st.session_state:
         st.dataframe(st.session_state.function_df)
         st.success("Import successful!")
-        if st.button("Start Over"):
-            st.session_state.deleting_in_progress = True
-            st.rerun()
     else:
         st.markdown("""
     <div style='font-size:17.5px; line-height:1.6'>
