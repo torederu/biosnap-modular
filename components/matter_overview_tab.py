@@ -6,7 +6,7 @@ from supabase_utils import get_user_supabase
 def matter_overview_tab(username: str):
     st.markdown("<h1>Matter Overview</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
-    matter_file = f"{username}/matter1.csv"
+    matter_file = f"{username}/matter.csv"
     try:
         matter_bytes = user_supabase.storage.from_("data").download(matter_file)
         matter_df = pd.read_csv(io.BytesIO(matter_bytes))
