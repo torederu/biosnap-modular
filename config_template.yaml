@@ -1,0 +1,16 @@
+credentials:
+  usernames:
+    GLCXXX:
+      email: glcxxx@example.com
+      name: Admin User
+      password: $2b$12$example_hashed_password_here
+      role: admin
+    otheruser:
+      email: other@example.com
+      name: Regular User
+      password: $2b$12$example_hashed_password_here
+      # No role specified = regular user
+cookie:
+  expiry_days: 30
+  key: some_random_key_here
+  name: some_cookie_name 

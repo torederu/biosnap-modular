@@ -1,5 +1,5 @@
 import streamlit as st
-from auth import get_authenticator
+from auth import get_authenticator, is_admin_user
 from components.function_health_tab import function_health_tab
 from components.thorne_tab import thorne_tab
 from components.prenuvo_tab import prenuvo_tab
@@ -17,6 +17,7 @@ from components.matter_overview_tab import matter_overview_tab
 from components.matter_memory_ratings_tab import matter_memory_ratings_tab
 from components.hri_tab import hri_tab
 from components.oprl_tab import oprl_tab
+from components.admin_tab import admin_tab
 
 def main():
     st.set_page_config(page_title="Biometric Snapshot", layout="centered")
@@ -36,25 +37,40 @@ def main():
     if not auth_status:
         st.stop()
 
-    # Five main tabs
+    # Check if current user is admin
+    is_admin = is_admin_user(username)
+    
+    # Determine which user's data to display
+    if is_admin and "admin_viewing_user" in st.session_state:
+        # Admin is viewing another user's data
+        display_username = st.session_state["admin_viewing_user"]
+    else:
+        # Normal user or admin viewing their own data
+        display_username = username
+
+    # Create tab names list - include Admin tab if user is admin
     main_tab_names = [
         "Screening",
-        "Labs",
+        "Labs", 
         "Emotion & Cognition",
         "Habits & Performance",
         "Interventions"
     ]
+    
+    if is_admin:
+        main_tab_names.append("Admin")
+    
     main_tabs = st.tabs(main_tab_names)
 
     # Screening
     with main_tabs[0]:
         screening_tabs = st.tabs(["Clinical Intake", "Toxicology", "Prenuvo"])
         with screening_tabs[0]:
-            clinical_intake_tab(username)
+            clinical_intake_tab(display_username)
         with screening_tabs[1]:
-            toxicology_tab(username)
+            toxicology_tab(display_username)
         with screening_tabs[2]:
-            prenuvo_tab(username)
+            prenuvo_tab(display_username)
 
     # Labs
     with main_tabs[1]:
@@ -66,15 +82,15 @@ def main():
             "Thorne Community Report"
         ])
         with labs_tabs[0]:
-            function_health_tab(username)
+            function_health_tab(display_username)
         with labs_tabs[1]:
-            biostarks_tab(username)
+            biostarks_tab(display_username)
         with labs_tabs[2]:
-            trudiagnostic_tab(username)
+            trudiagnostic_tab(display_username)
         with labs_tabs[3]:
-            thorne_tab(username)
+            thorne_tab(display_username)
         with labs_tabs[4]:
-            thorne2_tab(username)
+            thorne2_tab(display_username)
 
     # Emotion & Cognition
     with main_tabs[2]:
@@ -85,25 +101,30 @@ def main():
             "Surveys"
         ])
         with ec_tabs[0]:
-            matter_overview_tab(username)
+            matter_overview_tab(display_username)
         with ec_tabs[1]:
-            matter_memory_ratings_tab(username)
+            matter_memory_ratings_tab(display_username)
         with ec_tabs[2]:
-            hri_tab(username)
+            hri_tab(display_username)
         with ec_tabs[3]:
-            surveys_tab(username)
+            surveys_tab(display_username)
 
     # Habits & Performance
     with main_tabs[3]:
         hp_tabs = st.tabs(["Lifestyle", "OPRL"])
         with hp_tabs[0]:
-            lifestyle_tab(username)
+            lifestyle_tab(display_username)
         with hp_tabs[1]:
-            oprl_tab(username)
+            oprl_tab(display_username)
 
     # Interventions
     with main_tabs[4]:
-        interventions_tab(username)
+        interventions_tab(display_username)
+
+    # Admin tab (only shown for admin users)
+    if is_admin:
+        with main_tabs[5]:
+            admin_tab(username)
 
 if __name__ == "__main__":
     main()
