@@ -10,7 +10,7 @@ def matter_overview_tab(username: str):
     try:
         matter_bytes = user_supabase.storage.from_("data").download(matter_file)
         matter_df = pd.read_csv(io.BytesIO(matter_bytes))
-        st.markdown("Double-click any cell to reveal its full contents.")
+        st.markdown("Overview of Matter data from Jan 2025 - May 2025. Double-click any cell to reveal its full contents.")
         st.dataframe(matter_df)
     except Exception as e:
         st.info("There was an error retrieving your Matter data. Please contact admin.") 
