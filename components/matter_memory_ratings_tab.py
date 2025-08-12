@@ -13,4 +13,4 @@ def matter_memory_ratings_tab(username: str):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(matter_df)
     except Exception as e:
-        st.info("There was an error retrieving your matter memory ratings data. Please contact admin.") 
+        st.info("There was an error retrieving your Matter data. Please contact admin.") 

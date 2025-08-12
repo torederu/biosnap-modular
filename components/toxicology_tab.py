@@ -30,12 +30,12 @@ def toxicology_tab(username: str):
         except Exception as e:
             st.error(f"Error retrieving file: {e}")
     else:
-        st.markdown("<div style='font-size:17.5px; line-height:1.6'>Please upload your Quest Simple Report PDF:</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:17.5px; line-height:1.6'>Please upload your toxicology report:</div>", unsafe_allow_html=True)
         st.markdown(
             """
             <div style='font-size:15px; line-height:1.6; margin-bottom:0.5rem; padding-left:1.5rem'>
               <ol style="margin-top: 0; margin-bottom: 0;">
-                <li>Find the email containing your Quest results (titled "View your Quest test results")</li>
+                <li>Find the email containing your toxicology results (titled "View your Quest test results")</li>
                 <li>Submit your test registration confirmation code and personal details to log in</li>
                 <li>Click "View Online Results" on the right hand side</li>
                 <li>Click "Print Report" in the top right of the report area</li>
