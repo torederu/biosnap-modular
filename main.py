@@ -57,8 +57,8 @@ def main():
         "Interventions"
     ]
     
-    if is_admin:
-        main_tab_names.append("Admin")
+    # if is_admin:
+    #     main_tab_names.append("Admin")
     
     main_tabs = st.tabs(main_tab_names)
 
@@ -122,9 +122,9 @@ def main():
         interventions_tab(display_username)
 
     # Admin tab (only shown for admin users)
-    if is_admin:
-        with main_tabs[5]:
-            admin_tab(username)
+    # if is_admin:
+    #     with main_tabs[5]:
+    #         admin_tab(username)
 
 if __name__ == "__main__":
     main()
