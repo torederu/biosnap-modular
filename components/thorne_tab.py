@@ -65,6 +65,7 @@ def thorne_tab(username):
     elif st.session_state.get("thorne_csv_ready") and "thorne_df" in st.session_state:
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(st.session_state.thorne_df)
+        st.success("Import successful!")
     else:
         st.markdown("""
     <div style='font-size:17.5px; line-height:1.6'>
