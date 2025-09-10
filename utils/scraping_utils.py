@@ -14,6 +14,7 @@ import html
 from bs4 import BeautifulSoup
 import re
 import threading
+from datetime import datetime
 
 def update_progress(status, bar, message, percent):
     if status:
@@ -219,6 +220,238 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
         return re.sub(r'\s+', ' ', text).strip()
     for col in ['Insights', 'Summary']:
         df[col] = df[col].apply(clean_text)
+    # Clear Summary for non-summary categories
+    valid_categories = [
+        'Digestion', 'Inflammation', 'Gut Dysbiosis',
+        'Intestinal Permeability', 'Nervous System',
+        'Diversity Score', 'Immune Readiness Score',
+        'Pathogens'
+    ]
+    df.loc[~df['Category'].isin(valid_categories), 'Summary'] = ''
+    return df
+
+def get_thorne_available_tests(user_email, user_pass, status=None):
+    """Get available Thorne Gut Health test dates for selection."""
+    options = Options()
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--headless")
+    options.add_argument(
+        "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/114 Safari/537.36"
+    )
+
+    try:
+        service = Service(ChromeDriverManager().install())
+    except Exception:
+        service = Service("/usr/bin/chromedriver")
+        options.add_argument("--binary=/usr/bin/chromium")
+
+    driver = None
+
+    def update_status(message):
+        if status:
+            status.markdown(
+                f'<div style="margin-left:2.0em; font-size:1rem; font-weight:400; line-height:1.2; margin-top:-0.6em; margin-bottom:0.1em;">⤷ {message}</div>',
+                unsafe_allow_html=True
+            )
+
+    try:
+        update_status("Launching remote browser")
+        driver = webdriver.Chrome(service=service, options=options)
+        wait = WebDriverWait(driver, 15)
+
+        # Log in
+        update_status("Logging into Thorne")
+        driver.get("https://www.thorne.com/login")
+        wait.until(EC.element_to_be_clickable((By.NAME, "email"))).send_keys(user_email)
+        wait.until(EC.element_to_be_clickable((By.NAME, "password"))).send_keys(user_pass + Keys.RETURN)
+
+        # Navigate to test list
+        update_status("Fetching available tests")
+        driver.get("https://www.thorne.com/account/tests")
+        wait.until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Gut Health Test")]')))
+
+        # Get only rows with a visible "View Results" button
+        rows = driver.find_elements(
+            By.XPATH,
+            '//div[contains(text(), "Gut Health Test")]/ancestor::tr[1][.//a[contains(text(),"View Results")]]'
+        )
+
+        tests = []
+        for row in rows:
+            try:
+                name = row.find_element(By.XPATH, './/div[contains(@class,"has-text-black")]').text.strip()
+
+                try:
+                    date_raw = row.find_element(By.XPATH, './/td[@class="is-hidden-mobile"]/span').text.strip()
+                except:
+                    date_raw = row.find_element(By.XPATH, './/div[@class="is-hidden-tablet"]').text.strip()
+
+                button = row.find_element(By.XPATH, './/a[contains(text(),"View Results")]')
+                test_url = button.get_attribute('href')
+
+                tests.append({
+                    "label": name,
+                    "date": date_raw,
+                    "url": test_url
+                })
+            except:
+                continue
+
+        update_status("Closing remote browser")
+        driver.quit()
+        return tests
+
+    except Exception as e:
+        if driver:
+            driver.quit()
+        raise e
+
+def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=None):
+    """Scrape Thorne Gut Health report data for a specific test URL."""
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--window-size=1920x1080")
+
+    try:
+        service = Service(ChromeDriverManager().install())
+    except Exception:
+        service = Service("/usr/bin/chromedriver")
+        options.add_argument("--binary=/usr/bin/chromium")
+
+    driver = None
+
+    def update_status(message):
+        if status:
+            status.markdown(
+                f'<div style="margin-left:2.0em; font-size:1rem; font-weight:400; line-height:1.2; margin-top:-0.6em; margin-bottom:0.1em;">⤷ {message}</div>',
+                unsafe_allow_html=True
+            )
+
+    try:
+        update_status("Launching remote browser")
+        driver = webdriver.Chrome(service=service, options=options)
+        wait = WebDriverWait(driver, 15)
+
+        # Log in
+        update_status("Logging into Thorne")
+        driver.get("https://www.thorne.com/login")
+        wait.until(EC.element_to_be_clickable((By.NAME, "email"))).send_keys(user_email)
+        wait.until(EC.element_to_be_clickable((By.NAME, "password"))).send_keys(user_pass + Keys.RETURN)
+
+        try:
+            wait.until(lambda d: "/login" not in d.current_url)
+        except Exception:
+            raise ValueError("Login failed — please check your Thorne credentials.")
+
+        time.sleep(0.5)
+
+        # Navigate directly to the selected test URL
+        update_status("Opening selected test result")
+        driver.get(test_url)
+        wait.until(EC.url_contains("/account/tests/GUTHEALTH/"))
+
+        update_status("Extracting session data")
+        for popup_text in ["×", "Got it"]:
+            try:
+                wait.until(EC.element_to_be_clickable((By.XPATH, f"//button[contains(., '{popup_text}')]"))).click()
+            except:
+                pass
+
+        cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+
+        update_status("Closing remote browser")
+        time.sleep(1)
+        driver.quit()
+
+        # Extract test ID from URL for API call
+        test_id = test_url.split('/')[-1]
+
+        resp = requests.get(
+            f"https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details?testId={test_id}",
+            cookies=cookies,
+            headers={"Accept": "application/json"}
+        )
+
+        update_status("Cleaning data")
+        time.sleep(1)
+        resp.raise_for_status()
+        report = (resp.json() or [{}])[0]
+
+    except Exception as e:
+        if driver:
+            driver.quit()
+        raise e
+
+    # Process the report data (same as original function)
+    rows = []
+    for sec in report.get("bodySections", []):
+        results = sec.get("results") or []
+        if not results:
+            continue
+        insp = next(
+            (s for s in report["bodySections"]
+             if s.get("anchorId") == sec.get("anchorId", "").replace("_markers", "_insights")),
+            {}
+        )
+        insights = insp.get("content", "").strip()
+        first = results[0]
+        rows.append({
+            "section":       sec.get("title", ""),
+            "item":          None,
+            "score":         first.get("valueNumeric", first.get("value")),
+            "risk":          first.get("riskClassification", ""),
+            "optimal_range": first.get("content", "").strip(),
+            "insights":      insights
+        })
+        for item in results[1:]:
+            rows.append({
+                "section":       sec.get("title", ""),
+                "item":          item.get("title") or item.get("name"),
+                "score":         item.get("valueNumeric", item.get("value")),
+                "risk":          item.get("riskClassification", ""),
+                "optimal_range": None,
+                "insights":      insights
+            })
+
+    df = pd.DataFrame(rows)
+
+    # Cleaning/post-processing logic from original function
+    df = (
+        df.rename(columns={
+            'section': 'Category',
+            'item': 'Microbe',
+            'optimal_range': 'Summary',
+            'insights': 'Insights',
+            'score': 'Score',
+            'risk': 'Risk'
+        })
+        .assign(
+            Microbe=lambda x: x['Microbe'].fillna('Composite'),
+            Risk=lambda x: x['Risk'].str.title() if x['Risk'].dtype == 'object' else x['Risk']
+        )
+    )
+
+    # Deduplicate Insights: only keep the first non-empty per Category
+    df['Insights'] = df.groupby('Category')['Insights'] \
+                       .transform(lambda grp: grp.where(grp.ne('').cumsum() <= 1, ''))
+
+    # Cleaning function: un-escape entities, strip citations, remove HTML tags
+    def clean_text(text):
+        if not text:
+            return ''
+        text = html.unescape(text)
+        text = re.sub(r'<div class="references".*$', '', text, flags=re.DOTALL)
+        text = BeautifulSoup(text, 'html.parser').get_text(separator=' ')
+        return re.sub(r'\s+', ' ', text).strip()
+
+    for col in ['Insights', 'Summary']:
+        df[col] = df[col].apply(clean_text)
+
     # Clear Summary for non-summary categories
     valid_categories = [
         'Digestion', 'Inflammation', 'Gut Dysbiosis',
