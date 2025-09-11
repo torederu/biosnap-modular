@@ -167,56 +167,29 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
         results = sec.get("results") or []
         if not results:
             continue
-        
-        # Find insights section
         insp = next(
             (s for s in report["bodySections"]
              if s.get("anchorId") == sec.get("anchorId", "").replace("_markers", "_insights")),
             {}
         )
-        insights_html = insp.get("content", "").strip()
-        
-        # Find section summary/range text
-        summary_html = pick_section_summary(results)
-        
-        # Look for composite-like item
-        sec_title_norm = (sec.get("title") or "").strip().lower()
-        comp = next((r for r in results if is_composite_like(r, sec_title_norm)), None)
-        
-        # Section header row
-        if comp:
+        insights = insp.get("content", "").strip()
+        first = results[0]
+        rows.append({
+            "section":       sec.get("title", ""),
+            "item":          None,
+            "score":         first.get("valueNumeric", first.get("value")),
+            "risk":          first.get("riskClassification", ""),
+            "optimal_range": first.get("content", "").strip(),
+            "insights":      insights
+        })
+        for item in results[1:]:
             rows.append({
                 "section":       sec.get("title", ""),
-                "item":          "Composite",
-                "score":         comp.get("valueNumeric", comp.get("value")),
-                "risk":          comp.get("riskClassification", ""),
-                "optimal_range": summary_html,
-                "insights":      insights_html
-            })
-        else:
-            rows.append({
-                "section":       sec.get("title", ""),
-                "item":          "",      
-                "score":         "",    
-                "risk":          "",      
-                "optimal_range": summary_html,
-                "insights":      insights_html
-            })
-        
-        # Child microbes
-        for it in results:
-            if comp is not None and it is comp:
-                continue
-            name = (it.get("title") or it.get("name") or "").strip()
-            if not name:
-                continue
-            rows.append({
-                "section":       sec.get("title", ""),
-                "item":          name,
-                "score":         it.get("valueNumeric", it.get("value")),
-                "risk":          it.get("riskClassification", ""),
+                "item":          item.get("title") or item.get("name"),
+                "score":         item.get("valueNumeric", item.get("value")),
+                "risk":          item.get("riskClassification", ""),
                 "optimal_range": None,
-                "insights":      ""
+                "insights":      insights
             })
     df = pd.DataFrame(rows)
     # --- Cleaning/post-processing logic from notebook ---
@@ -230,6 +203,7 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
             'risk': 'Risk'
         })
         .assign(
+            Microbe=lambda x: x['Microbe'].fillna('Composite'),
             Risk=lambda x: x['Risk'].str.title() if x['Risk'].dtype == 'object' else x['Risk']
         )
     )
@@ -335,57 +309,6 @@ def get_thorne_available_tests(user_email, user_pass, status=None):
             driver.quit()
         raise e
 
-
-def is_number(val):
-    """Check if a value is numeric."""
-    if val is None:
-        return False
-    try:
-        float(val)
-        return True
-    except (ValueError, TypeError):
-        return False
-
-def is_composite_like(item, sec_title_norm):
-    """Check if an item represents a composite/section score."""
-    title = (item.get("title") or item.get("name") or "").strip()
-    content = (item.get("content") or "")
-    val = item.get("valueNumeric", item.get("value"))
-
-    has_value = (val is not None) and (str(val).strip() != "")
-    is_num = False
-    try:
-        float(val)
-        is_num = True
-    except Exception:
-        pass
-
-    looks_summary = bool(re.search(r"(optimal range|reference range|your .* score)", content, re.I))
-    title_is_score = bool(re.search(r"\bscore\b", title, re.I))
-
-    # NEW: title matches section title and has any value (numeric or text)
-    title_matches_section = title.strip().lower() == sec_title_norm
-
-    return (
-        (title == "" and (is_num or looks_summary)) or
-        (title_is_score and is_num) or
-        (title_matches_section and has_value)
-    )
-
-def pick_section_summary(results):
-    """Find the first content snippet that contains a range."""
-    for it in results:
-        c = it.get("content") or ""
-        if re.search(r"(optimal range|reference range)", c, re.I):
-            return c
-        if re.search(r"[≤≥<>]?\s*\d+(?:\.\d+)?\s*(–|-|to)\s*[≤≥<>]?\s*\d+(?:\.\d+)?", c):
-            return c
-    # fallback: any "*Score" item's content
-    for it in results:
-        t = it.get("title") or it.get("name") or ""
-        if "score" in t.lower() and it.get("content"):
-            return it["content"]
-    return ""
 def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=None):
     """Scrape Thorne Gut Health report data for a specific test URL."""
     options = Options()
@@ -464,62 +387,35 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
             driver.quit()
         raise e
 
-    # Process the report data with improved logic
+    # Process the report data (same as original function)
     rows = []
     for sec in report.get("bodySections", []):
         results = sec.get("results") or []
         if not results:
             continue
-        
-        # Find insights section
         insp = next(
             (s for s in report["bodySections"]
              if s.get("anchorId") == sec.get("anchorId", "").replace("_markers", "_insights")),
             {}
         )
-        insights_html = insp.get("content", "").strip()
-        
-        # Find section summary/range text
-        summary_html = pick_section_summary(results)
-        
-        # Look for composite-like item
-        sec_title_norm = (sec.get("title") or "").strip().lower()
-        comp = next((r for r in results if is_composite_like(r, sec_title_norm)), None)
-        
-        # Section header row
-        if comp:
+        insights = insp.get("content", "").strip()
+        first = results[0]
+        rows.append({
+            "section":       sec.get("title", ""),
+            "item":          None,
+            "score":         first.get("valueNumeric", first.get("value")),
+            "risk":          first.get("riskClassification", ""),
+            "optimal_range": first.get("content", "").strip(),
+            "insights":      insights
+        })
+        for item in results[1:]:
             rows.append({
                 "section":       sec.get("title", ""),
-                "item":          "Composite",
-                "score":         comp.get("valueNumeric", comp.get("value")),
-                "risk":          comp.get("riskClassification", ""),
-                "optimal_range": summary_html,
-                "insights":      insights_html
-            })
-        else:
-            rows.append({
-                "section":       sec.get("title", ""),
-                "item":          "",      # blank microbe name
-                "score":         "",     # no composite value
-                "risk":          "",      # no risk
-                "optimal_range": summary_html,
-                "insights":      insights_html
-            })
-        
-        # Child microbes
-        for it in results:
-            if comp is not None and it is comp:
-                continue
-            name = (it.get("title") or it.get("name") or "").strip()
-            if not name:
-                continue
-            rows.append({
-                "section":       sec.get("title", ""),
-                "item":          name,
-                "score":         it.get("valueNumeric", it.get("value")),
-                "risk":          it.get("riskClassification", ""),
+                "item":          item.get("title") or item.get("name"),
+                "score":         item.get("valueNumeric", item.get("value")),
+                "risk":          item.get("riskClassification", ""),
                 "optimal_range": None,
-                "insights":      ""
+                "insights":      insights
             })
 
     df = pd.DataFrame(rows)
@@ -535,6 +431,7 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
             'risk': 'Risk'
         })
         .assign(
+            Microbe=lambda x: x['Microbe'].fillna('Composite'),
             Risk=lambda x: x['Risk'].str.title() if x['Risk'].dtype == 'object' else x['Risk']
         )
     )
