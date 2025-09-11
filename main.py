@@ -1,130 +1,22 @@
 import streamlit as st
-from auth import get_authenticator, is_admin_user
-from components.function_health_tab import function_health_tab
-from components.thorne_tab import thorne_tab
-from components.prenuvo_tab import prenuvo_tab
-from components.trudiagnostic_tab import trudiagnostic_tab
-from components.biostarks_tab import biostarks_tab
-from components.surveys_tab import surveys_tab
-from components.interventions_tab import interventions_tab
-from components.clinical_intake_tab import clinical_intake_tab
-from components.lifestyle_tab import lifestyle_tab
-from components.thorne2_tab import thorne2_tab
+from components.timepoint_layout import render_timepoint_layout
 
-# New placeholder tabs
-from components.toxicology_tab import toxicology_tab
-from components.matter_overview_tab import matter_overview_tab
-from components.matter_memory_ratings_tab import matter_memory_ratings_tab
-from components.hri_tab import hri_tab
-from components.oprl_tab import oprl_tab
-from components.admin_tab import admin_tab
+# Set page config FIRST - before any other Streamlit commands
+st.set_page_config(page_title="Biometric Snapshot", layout="centered")
 
-def main():
-    st.set_page_config(page_title="Biometric Snapshot", layout="centered")
-    authenticator = get_authenticator()
-    authenticator.login(location='main')
-    auth_status = st.session_state.get("authentication_status")
-    username = st.session_state.get("username")
-    if auth_status is False:
-        st.error("Username or password is incorrect.")
-        st.stop()
-    elif auth_status is None:
-        st.stop()
-    elif auth_status:
-        col1, col2 = st.columns([4, 1])
-        with col2:
-            authenticator.logout("Logout", location='main')
-    if not auth_status:
-        st.stop()
+# Create individual page functions
+def timepoint_01():
+    render_timepoint_layout("T_01", "Time Point #01")
 
-    # Check if current user is admin
-    is_admin = is_admin_user(username)
-    
-    # Determine which user's data to display
-    if is_admin and "admin_viewing_user" in st.session_state:
-        # Admin is viewing another user's data
-        display_username = st.session_state["admin_viewing_user"]
-    else:
-        # Normal user or admin viewing their own data
-        display_username = username
+def timepoint_02():
+    render_timepoint_layout("T_02", "Time Point #02")
 
-    # Create tab names list - include Admin tab if user is admin
-    main_tab_names = [
-        "Screening",
-        "Labs", 
-        "Emotion & Cognition",
-        "Habits & Performance",
-        "Interventions"
-    ]
-    
-    # if is_admin:
-    #     main_tab_names.append("Admin")
-    
-    main_tabs = st.tabs(main_tab_names)
+# Create pages with custom labels
+timepoint_01_page = st.Page(timepoint_01, title="Time Point 01")
+timepoint_02_page = st.Page(timepoint_02, title="Time Point 02")
 
-    # Screening
-    with main_tabs[0]:
-        screening_tabs = st.tabs(["Clinical Intake", "Toxicology", "Prenuvo"])
-        with screening_tabs[0]:
-            clinical_intake_tab(display_username)
-        with screening_tabs[1]:
-            toxicology_tab(display_username)
-        with screening_tabs[2]:
-            prenuvo_tab(display_username)
+# Set up navigation
+nav = st.navigation([timepoint_01_page, timepoint_02_page])
 
-    # Labs
-    with main_tabs[1]:
-        labs_tabs = st.tabs([
-            "Function Health",
-            "Biostarks",
-            "Trudiagnostic",
-            "Thorne Overview",
-            "Thorne Community Report"
-        ])
-        with labs_tabs[0]:
-            function_health_tab(display_username)
-        with labs_tabs[1]:
-            biostarks_tab(display_username)
-        with labs_tabs[2]:
-            trudiagnostic_tab(display_username)
-        with labs_tabs[3]:
-            thorne_tab(display_username)
-        with labs_tabs[4]:
-            thorne2_tab(display_username)
-
-    # Emotion & Cognition
-    with main_tabs[2]:
-        ec_tabs = st.tabs([
-            "Matter Overview",
-            "Matter Memory Ratings",
-            "HRI",
-            "Surveys"
-        ])
-        with ec_tabs[0]:
-            matter_overview_tab(display_username)
-        with ec_tabs[1]:
-            matter_memory_ratings_tab(display_username)
-        with ec_tabs[2]:
-            hri_tab(display_username)
-        with ec_tabs[3]:
-            surveys_tab(display_username)
-
-    # Habits & Performance
-    with main_tabs[3]:
-        hp_tabs = st.tabs(["Lifestyle", "OPRL"])
-        with hp_tabs[0]:
-            lifestyle_tab(display_username)
-        with hp_tabs[1]:
-            oprl_tab(display_username)
-
-    # Interventions
-    with main_tabs[4]:
-        interventions_tab(display_username)
-
-    # Admin tab (only shown for admin users)
-    # if is_admin:
-    #     with main_tabs[5]:
-    #         admin_tab(username)
-
-if __name__ == "__main__":
-    main()
+# Run the navigation
+nav.run()

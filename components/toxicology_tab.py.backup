@@ -5,14 +5,14 @@ from supabase_utils import get_user_supabase
 from utils.toxicology_utils import extract_results_to_dataframe, humanize_result_text
 
 
-def toxicology_tab(username: str, timepoint_id="T_01"):
+def toxicology_tab(username: str):
     st.markdown("<h1>Toxicology</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     bucket = user_supabase.storage.from_("data")
-    csv_key = f"{username}/{timepoint_id}/toxicology.csv"
+    csv_key = f"{username}/toxicology.csv"
 
     # Check if CSV already exists
-    file_list = bucket.list(path=f"{username}/{timepoint_id}")
+    file_list = bucket.list(path=username)
     csv_exists = any(f["name"] == "toxicology.csv" for f in file_list)
 
     if csv_exists:

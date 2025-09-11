@@ -5,15 +5,15 @@ import time
 from utils.scraping_utils import update_progress, scrape_function_health
 from supabase_utils import get_user_supabase
 
-def function_health_tab(username, timepoint_id="T_01"):
+def function_health_tab(username):
     user_supabase = get_user_supabase()
     # === Try to restore saved CSV (stateless ghost-block logic)
     if not st.session_state.get("function_csv_ready"):
         try:
             bucket = user_supabase.storage.from_("data")
-            function_filename = f"{username}/{timepoint_id}/functionhealth.csv"
+            function_filename = f"{username}/functionhealth.csv"
             res = bucket.download(function_filename)
-            files = bucket.list(path=f"{username}/{timepoint_id}/")
+            files = bucket.list(path=f"{username}/")
             in_list = any(f["name"] == "functionhealth.csv" for f in files)
             if res and len(res) > 0 and not in_list:
                 st.session_state.function_csv_ready = False
@@ -43,7 +43,7 @@ def function_health_tab(username, timepoint_id="T_01"):
                 file_still_exists = True
                 for attempt in range(max_attempts):
                     time.sleep(3)
-                    files = bucket.list(path=f"{username}/{timepoint_id}/")
+                    files = bucket.list(path=f"{username}/")
                     file_still_exists = any(f["name"] == "functionhealth.csv" for f in files)
                     if not file_still_exists:
                         break
@@ -97,7 +97,7 @@ def function_health_tab(username, timepoint_id="T_01"):
                     st.session_state.function_df = function_df
                     st.session_state.function_csv_filename = f"{username}_functionhealth.csv"
                     st.session_state.function_csv_file = function_csv_bytes
-                    function_filename = f"{username}/{timepoint_id}/functionhealth.csv"
+                    function_filename = f"{username}/functionhealth.csv"
                     bucket = user_supabase.storage.from_("data")
                     try:
                         bucket.remove([function_filename])

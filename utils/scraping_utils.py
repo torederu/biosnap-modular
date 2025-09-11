@@ -445,11 +445,8 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
         time.sleep(1)
         driver.quit()
 
-        # Extract test ID from URL for API call
-        test_id = test_url.split('/')[-1]
-
         resp = requests.get(
-            f"https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details?testId={test_id}",
+            "https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details",
             cookies=cookies,
             headers={"Accept": "application/json"}
         )
