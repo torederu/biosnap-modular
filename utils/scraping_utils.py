@@ -15,6 +15,51 @@ from bs4 import BeautifulSoup
 import re
 import threading
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+# Default timezone for date formatting (matches common UI expectations)
+LOCAL_TZ = "US/Eastern"
+
+def local_label(ts_utc_str, tz=LOCAL_TZ):
+    """Convert UTC timestamp to local date in mm/dd/yyyy format."""
+    dt = datetime.fromisoformat(ts_utc_str.replace("Z", "+00:00")).astimezone(ZoneInfo(tz))
+    # Match the UI dropdown format (mm/dd/yyyy)
+    return dt.strftime("%m/%d/%Y")
+
+def build_date_index(reports):
+    """Map local date -> list of reports with that date."""
+    idx = {}
+    for r in reports:
+        if "createdTimestamp" not in r:
+            continue
+        lbl = local_label(r["createdTimestamp"])
+        idx.setdefault(lbl, []).append(r)
+    # Sort each bucket by exact UTC createdTimestamp newest→oldest just in case
+    for k in idx:
+        idx[k].sort(key=lambda rr: rr["createdTimestamp"], reverse=True)
+    return idx
+
+def choose_report_by_created_date(reports, target_local_date):
+    """Select a specific report by its local creation date."""
+    idx = build_date_index(reports)
+    if target_local_date is None:
+        # pick most recent by default
+        target_local_date = sorted(idx.keys(), reverse=True)[0]
+    if target_local_date not in idx:
+        raise ValueError(f"No report for local date {target_local_date}. Available: {sorted(idx.keys())}")
+    # If more than one report shares the same local date, take the newest createdTimestamp
+    return idx[target_local_date][0], target_local_date
+
+def fetch_all_thorne_reports(cookies):
+    """Fetch all Gut Health reports from the Thorne API."""
+    url = "https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details"
+    r = requests.get(url, cookies=cookies, headers={"Accept": "application/json"})
+    r.raise_for_status()
+    data = r.json() or []
+    # Some responses come as dict-with-list; normalize to list of reports
+    if isinstance(data, dict) and "reports" in data:
+        data = data["reports"]
+    return data
 
 def update_progress(status, bar, message, percent):
     if status:
@@ -147,17 +192,14 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
                 pass
         cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
         update_status("Closing remote browser")
-        time.sleep(1)
         driver.quit()
-        resp = requests.get(
-            "https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details",
-            cookies=cookies,
-            headers={"Accept": "application/json"}
-        )
-        update_status("Cleaning data")
-        time.sleep(1)
-        resp.raise_for_status()
-        report = (resp.json() or [{}])[0]
+        
+        # Fetch the most recent report
+        update_status("Fetching report data")
+        all_reports = fetch_all_thorne_reports(cookies)
+        report, _ = choose_report_by_created_date(all_reports, None)  # None gets most recent
+        
+        update_status("Processing report data")
     except Exception as e:
         if driver:
             driver.quit()
@@ -219,7 +261,8 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
                 "insights":      ""
             })
     df = pd.DataFrame(rows)
-    # --- Cleaning/post-processing logic from notebook ---
+    
+    # Post-processing and cleanup
     df = (
         df.rename(columns={
             'section': 'Category',
@@ -256,17 +299,16 @@ def scrape_thorne_gut_report(user_email, user_pass, status=None):
     df.loc[~df['Category'].isin(valid_categories), 'Summary'] = ''
     return df
 
+
 def get_thorne_available_tests(user_email, user_pass, status=None):
-    """Get available Thorne Gut Health test dates for selection."""
+    """Get available Thorne Gut Health test dates for selection using API."""
+    from datetime import datetime
+    
     options = Options()
+    options.add_argument("--headless=new")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--headless")
-    options.add_argument(
-        "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/114 Safari/537.36"
-    )
+    options.add_argument("--window-size=1920x1080")
 
     try:
         service = Service(ChromeDriverManager().install())
@@ -293,42 +335,54 @@ def get_thorne_available_tests(user_email, user_pass, status=None):
         driver.get("https://www.thorne.com/login")
         wait.until(EC.element_to_be_clickable((By.NAME, "email"))).send_keys(user_email)
         wait.until(EC.element_to_be_clickable((By.NAME, "password"))).send_keys(user_pass + Keys.RETURN)
+        
+        try:
+            wait.until(lambda d: "/login" not in d.current_url)
+        except Exception:
+            raise ValueError("Login failed — please check your Thorne credentials.")
 
-        # Navigate to test list
-        update_status("Fetching available tests")
-        driver.get("https://www.thorne.com/account/tests")
-        wait.until(EC.presence_of_element_located((By.XPATH, '//div[contains(text(), "Gut Health Test")]')))
-
-        # Get only rows with a visible "View Results" button
-        rows = driver.find_elements(
-            By.XPATH,
-            '//div[contains(text(), "Gut Health Test")]/ancestor::tr[1][.//a[contains(text(),"View Results")]]'
-        )
-
-        tests = []
-        for row in rows:
-            try:
-                name = row.find_element(By.XPATH, './/div[contains(@class,"has-text-black")]').text.strip()
-
-                try:
-                    date_raw = row.find_element(By.XPATH, './/td[@class="is-hidden-mobile"]/span').text.strip()
-                except:
-                    date_raw = row.find_element(By.XPATH, './/div[@class="is-hidden-tablet"]').text.strip()
-
-                button = row.find_element(By.XPATH, './/a[contains(text(),"View Results")]')
-                test_url = button.get_attribute('href')
-
-                tests.append({
-                    "label": name,
-                    "date": date_raw,
-                    "url": test_url
-                })
-            except:
-                continue
-
+        # Get session cookies for API calls
+        update_status("Fetching available Gut Health tests")
+        cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
+        
         update_status("Closing remote browser")
         driver.quit()
-        return tests
+        
+        # Use API to get test data
+        resp = requests.get(
+            "https://www.thorne.com/account/data/tests",
+            cookies=cookies,
+            headers={"Accept": "application/json"}
+        )
+        resp.raise_for_status()
+        all_tests = resp.json()
+        
+        # Filter for completed Gut Health tests only
+        gut_health_tests = []
+        for test in all_tests:
+            if (test.get("packageIdentifier") == "GUTHEALTH" and 
+                test.get("completed") == True and 
+                test.get("completedTimestamp")):
+                
+                # Format the completion date
+                try:
+                    formatted_date = local_label(test["completedTimestamp"])
+                    label = f"Gut Health Test - Completed on {formatted_date}"
+                except Exception:
+                    label = f"Gut Health Test - Completed on {test.get('completedTimestamp', 'Unknown date')}"
+                
+                gut_health_tests.append({
+                    "id": test["id"],
+                    "label": label, 
+                    "date": test["completedTimestamp"],
+                    "local_date": formatted_date,
+                    "packageName": test.get("packageName", "Gut Health Test")
+                })
+        
+        # Sort by completion date (newest first)
+        gut_health_tests.sort(key=lambda x: x["date"], reverse=True)
+        
+        return gut_health_tests
 
     except Exception as e:
         if driver:
@@ -386,8 +440,9 @@ def pick_section_summary(results):
         if "score" in t.lower() and it.get("content"):
             return it["content"]
     return ""
-def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=None):
-    """Scrape Thorne Gut Health report data for a specific test URL."""
+
+def scrape_thorne_gut_report_by_date(user_email, user_pass, target_local_date, status=None):
+    """Scrape Thorne Gut Health report data for a specific date."""
     options = Options()
     options.add_argument("--headless=new")
     options.add_argument("--disable-dev-shm-usage")
@@ -425,43 +480,32 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
         except Exception:
             raise ValueError("Login failed — please check your Thorne credentials.")
 
-        time.sleep(0.5)
+        # Navigate to tests page to establish session
+        update_status("Opening Gut Health tests")
+        driver.get("https://www.thorne.com/account/tests")
 
-        # Navigate directly to the selected test URL
-        update_status("Opening selected test result")
-        driver.get(test_url)
-        wait.until(EC.url_contains("/account/tests/GUTHEALTH/"))
-
+        # Get session cookies for API call
         update_status("Extracting session data")
-        for popup_text in ["×", "Got it"]:
-            try:
-                wait.until(EC.element_to_be_clickable((By.XPATH, f"//button[contains(., '{popup_text}')]"))).click()
-            except:
-                pass
-
         cookies = {c["name"]: c["value"] for c in driver.get_cookies()}
 
         update_status("Closing remote browser")
-        time.sleep(1)
         driver.quit()
 
-        resp = requests.get(
-            "https://www.thorne.com/account/data/tests/reports/GUTHEALTH/details",
-            cookies=cookies,
-            headers={"Accept": "application/json"}
-        )
-
-        update_status("Cleaning data")
-        time.sleep(1)
-        resp.raise_for_status()
-        report = (resp.json() or [{}])[0]
+        # Fetch all reports and select the specific one by date
+        update_status("Fetching all report data")
+        all_reports = fetch_all_thorne_reports(cookies)
+        
+        update_status("Selecting report by date")
+        report, selected_date = choose_report_by_created_date(all_reports, target_local_date)
+        
+        update_status(f"Processing report from {selected_date}")
 
     except Exception as e:
         if driver:
             driver.quit()
         raise e
 
-    # Process the report data with improved logic
+    # Process the report data
     rows = []
     for sec in report.get("bodySections", []):
         results = sec.get("results") or []
@@ -483,7 +527,7 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
         sec_title_norm = (sec.get("title") or "").strip().lower()
         comp = next((r for r in results if is_composite_like(r, sec_title_norm)), None)
         
-        # Section header row
+        # Add section header row
         if comp:
             rows.append({
                 "section":       sec.get("title", ""),
@@ -496,9 +540,9 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
         else:
             rows.append({
                 "section":       sec.get("title", ""),
-                "item":          "",      # blank microbe name
-                "score":         "",     # no composite value
-                "risk":          "",      # no risk
+                "item":          "",      
+                "score":         "",    
+                "risk":          "",      
                 "optimal_range": summary_html,
                 "insights":      insights_html
             })
@@ -521,7 +565,7 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
 
     df = pd.DataFrame(rows)
 
-    # Cleaning/post-processing logic from original function
+    # Cleaning/post-processing logic
     df = (
         df.rename(columns={
             'section': 'Category',
@@ -537,8 +581,7 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
     )
 
     # Deduplicate Insights: only keep the first non-empty per Category
-    df['Insights'] = df.groupby('Category')['Insights'] \
-                       .transform(lambda grp: grp.where(grp.ne('').cumsum() <= 1, ''))
+    df['Insights'] = df.groupby('Category')['Insights']                        .transform(lambda grp: grp.where(grp.ne('').cumsum() <= 1, ''))
 
     # Cleaning function: un-escape entities, strip citations, remove HTML tags
     def clean_text(text):
@@ -560,4 +603,4 @@ def scrape_thorne_gut_report_by_date(user_email, user_pass, test_url, status=Non
         'Pathogens'
     ]
     df.loc[~df['Category'].isin(valid_categories), 'Summary'] = ''
-    return df 
+    return df
