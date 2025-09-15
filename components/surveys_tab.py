@@ -3,8 +3,8 @@ import pandas as pd
 import io
 from supabase_utils import get_user_supabase
 
-def surveys_tab(username, timepoint_id="T_01"):
-    st.markdown("<h1>Surveys</h1>", unsafe_allow_html=True)
+def surveys_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Surveys</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     behavior_scores_file = f"{username}/{timepoint_id}/surveys.csv"
     try:

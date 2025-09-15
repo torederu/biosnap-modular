@@ -5,8 +5,8 @@ from supabase_utils import get_user_supabase
 from utils.toxicology_utils import extract_results_to_dataframe, humanize_result_text
 
 
-def toxicology_tab(username: str, timepoint_id="T_01"):
-    st.markdown("<h1>Toxicology</h1>", unsafe_allow_html=True)
+def toxicology_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Toxicology</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     bucket = user_supabase.storage.from_("data")
     csv_key = f"{username}/{timepoint_id}/toxicology.csv"

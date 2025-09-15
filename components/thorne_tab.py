@@ -6,7 +6,7 @@ from datetime import datetime
 from utils.scraping_utils import scrape_thorne_gut_report, get_thorne_available_tests, scrape_thorne_gut_report_by_date
 from supabase_utils import get_user_supabase
 
-def thorne_tab(username, timepoint_id="T_01"):
+def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
     # === Try to restore saved CSV (stateless ghost-block logic)
     if not st.session_state.get("thorne_csv_ready"):
@@ -28,7 +28,7 @@ def thorne_tab(username, timepoint_id="T_01"):
         except Exception:
             st.session_state.thorne_csv_ready = False
     
-    st.markdown("<h1>Thorne Overview</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1>{timepoint_modifier} Thorne Overview</h1>", unsafe_allow_html=True)
     
     if st.session_state.get("deleting_thorne_in_progress", False):
         with st.spinner("Deleting file from database..."):

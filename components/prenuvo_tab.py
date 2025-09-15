@@ -9,13 +9,13 @@ import io
 from datetime import datetime
 import streamlit.components.v1 as components
 
-def prenuvo_tab(username, timepoint_id="T_01"):
+def prenuvo_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
     filename = f"{username}/redacted_prenuvo_report.pdf"
     bucket = user_supabase.storage.from_("data")
     file_list = bucket.list(path=f"{username}/{timepoint_id}")
     file_exists = any(f["name"] == "redacted_prenuvo_report.pdf" for f in file_list)
-    st.markdown("<h1>Prenuvo</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h1>{timepoint_modifier} Prenuvo</h1>", unsafe_allow_html=True)
     if file_exists:
         st.success("Your report was successfully redacted and saved!")
         try:

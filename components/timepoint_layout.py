@@ -1,5 +1,5 @@
 import streamlit as st
-from auth import get_authenticator, is_admin_user
+from auth import is_admin_user
 from components.function_health_tab import function_health_tab
 from components.thorne_tab import thorne_tab
 from components.prenuvo_tab import prenuvo_tab
@@ -17,30 +17,17 @@ from components.hri_tab import hri_tab
 from components.oprl_tab import oprl_tab
 from components.admin_tab import admin_tab
 
-def render_timepoint_layout(timepoint_id, timepoint_name):
+def render_timepoint_layout(timepoint_id, timepoint_name, authenticator=None):
     """
     Render the common layout for all timepoint pages
     
     Args:
         timepoint_id: The timepoint identifier (e.g., "T_01", "T_02")
         timepoint_name: The display name (e.g., "Time Point #01", "Time Point #02")
+        authenticator: Optional authenticator instance (not used, kept for compatibility)
     """
-    authenticator = get_authenticator()
-    authenticator.login(location='main')
-    auth_status = st.session_state.get("authentication_status")
-    username = st.session_state.get("username")
-    
-    if auth_status is False:
-        st.error("Username or password is incorrect.")
-        st.stop()
-    elif auth_status is None:
-        st.stop()
-    elif auth_status:
-        col1, col2 = st.columns([4, 1])
-        with col2:
-            authenticator.logout("Logout", location='main')
-    if not auth_status:
-        st.stop()
+    # Get username from session state (auth already handled in main)
+    username = st.session_state.get("username", "USER")
 
     # Check if current user is admin
     is_admin = is_admin_user(username)
@@ -53,8 +40,10 @@ def render_timepoint_layout(timepoint_id, timepoint_name):
         # Normal user or admin viewing their own data
         display_username = username
 
+    # Extract timepoint number for modifier (e.g., "T_01" -> "T01")
+    timepoint_modifier = timepoint_id.replace("_", "")
     
-    # Create tab names list
+    # Create tab names list (original names without modifiers)
     main_tab_names = [
         "Screening",
         "Labs", 
@@ -69,11 +58,11 @@ def render_timepoint_layout(timepoint_id, timepoint_name):
     with main_tabs[0]:
         screening_tabs = st.tabs(["Clinical Intake", "Toxicology", "Prenuvo"])
         with screening_tabs[0]:
-            clinical_intake_tab(display_username, timepoint_id)
+            clinical_intake_tab(display_username, timepoint_id, timepoint_modifier)
         with screening_tabs[1]:
-            toxicology_tab(display_username, timepoint_id)
+            toxicology_tab(display_username, timepoint_id, timepoint_modifier)
         with screening_tabs[2]:
-            prenuvo_tab(display_username, timepoint_id)
+            prenuvo_tab(display_username, timepoint_id, timepoint_modifier)
 
     # Labs
     with main_tabs[1]:
@@ -85,15 +74,15 @@ def render_timepoint_layout(timepoint_id, timepoint_name):
             "Thorne Community Report"
         ])
         with labs_tabs[0]:
-            function_health_tab(display_username, timepoint_id)
+            function_health_tab(display_username, timepoint_id, timepoint_modifier)
         with labs_tabs[1]:
-            biostarks_tab(display_username, timepoint_id)
+            biostarks_tab(display_username, timepoint_id, timepoint_modifier)
         with labs_tabs[2]:
-            trudiagnostic_tab(display_username, timepoint_id)
+            trudiagnostic_tab(display_username, timepoint_id, timepoint_modifier)
         with labs_tabs[3]:
-            thorne_tab(display_username, timepoint_id)
+            thorne_tab(display_username, timepoint_id, timepoint_modifier)
         with labs_tabs[4]:
-            thorne2_tab(display_username, timepoint_id)
+            thorne2_tab(display_username, timepoint_id, timepoint_modifier)
 
     # Emotion & Cognition
     with main_tabs[2]:
@@ -104,22 +93,22 @@ def render_timepoint_layout(timepoint_id, timepoint_name):
             "Surveys"
         ])
         with ec_tabs[0]:
-            matter_overview_tab(display_username, timepoint_id)
+            matter_overview_tab(display_username, timepoint_id, timepoint_modifier)
         with ec_tabs[1]:
-            matter_memory_ratings_tab(display_username, timepoint_id)
+            matter_memory_ratings_tab(display_username, timepoint_id, timepoint_modifier)
         with ec_tabs[2]:
-            hri_tab(display_username, timepoint_id)
+            hri_tab(display_username, timepoint_id, timepoint_modifier)
         with ec_tabs[3]:
-            surveys_tab(display_username, timepoint_id)
+            surveys_tab(display_username, timepoint_id, timepoint_modifier)
 
     # Habits & Performance
     with main_tabs[3]:
         hp_tabs = st.tabs(["Lifestyle", "OPRL"])
         with hp_tabs[0]:
-            lifestyle_tab(display_username, timepoint_id)
+            lifestyle_tab(display_username, timepoint_id, timepoint_modifier)
         with hp_tabs[1]:
-            oprl_tab(display_username, timepoint_id)
+            oprl_tab(display_username, timepoint_id, timepoint_modifier)
 
     # Interventions
     with main_tabs[4]:
-        interventions_tab(display_username, timepoint_id)
+        interventions_tab(display_username, timepoint_id, timepoint_modifier)

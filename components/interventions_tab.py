@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from supabase_utils import get_user_supabase
 
-def interventions_tab(username, timepoint_id="T_01"):
+def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
     if "intervention_plan_df" not in st.session_state:
         try:
@@ -26,11 +26,11 @@ def interventions_tab(username, timepoint_id="T_01"):
             pass
     if "intervention_plan_df" in st.session_state:
         timestamp = st.session_state.get("intervention_plan_timestamp")
-        st.markdown("<h1>Interventions</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1>{timepoint_modifier} Interventions</h1>", unsafe_allow_html=True)
         st.markdown(f"Saved on {timestamp}. Double-click any cell to reveal its full contents.")
         st.dataframe(st.session_state.intervention_plan_df)
     else:
-        st.markdown("<h1>Interventions</h1>", unsafe_allow_html=True)
+        st.markdown(f"<h1>{timepoint_modifier} Interventions</h1>", unsafe_allow_html=True)
         st.markdown("""
         Use this space to design your personalized 8-week intervention plan. 
         Choose which domains you'd like to focus on, then describe the specific actions you'll commit to. 

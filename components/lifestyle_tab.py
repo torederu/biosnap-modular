@@ -3,8 +3,8 @@ import pandas as pd
 import io
 from supabase_utils import get_user_supabase
 
-def lifestyle_tab(username, timepoint_id="T_01"):
-    st.markdown("<h1>Lifestyle</h1>", unsafe_allow_html=True)
+def lifestyle_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Lifestyle</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     lifestyle_file = f"{username}/{timepoint_id}/lifestyle.csv"
     try:

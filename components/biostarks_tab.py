@@ -4,8 +4,8 @@ import io
 import time
 from supabase_utils import get_user_supabase
 
-def biostarks_tab(username, timepoint_id="T_01"):
-    st.markdown("<h1>Biostarks</h1>", unsafe_allow_html=True)
+def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Biostarks</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     biostarks_filename = f"{username}/{timepoint_id}/biostarks.csv"
     bucket = user_supabase.storage.from_("data")

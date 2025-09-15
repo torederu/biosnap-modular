@@ -3,8 +3,8 @@ import pandas as pd
 import io
 from supabase_utils import get_user_supabase
 
-def oprl_tab(username: str, timepoint_id="T_01"):
-    st.markdown("<h1>Oregon Performance Research Lab</h1>", unsafe_allow_html=True)
+def oprl_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Oregon Performance Research Lab</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     oprl_file = f"{username}/{timepoint_id}/oprl.csv"
     try:

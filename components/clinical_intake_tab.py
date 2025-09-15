@@ -3,8 +3,8 @@ import pandas as pd
 import io
 from supabase_utils import get_user_supabase
 
-def clinical_intake_tab(username, timepoint_id="T_01"):
-    st.markdown("<h1>Clinical Intake</h1>", unsafe_allow_html=True)
+def clinical_intake_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
+    st.markdown(f"<h1>{timepoint_modifier} Clinical Intake</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     clinical_file = f"{username}/{timepoint_id}/clinical.csv"
     try:
