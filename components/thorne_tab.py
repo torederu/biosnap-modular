@@ -111,14 +111,8 @@ def thorne_tab(username, timepoint_id="T_01"):
             
             st.markdown("### Available Test Results")
             
-            # Create labels with formatted dates
-            labels = []
-            for test in available_tests:
-                try:
-                    nice_date = datetime.strptime(test["date"], "%m/%d/%Y").strftime("%B %Y")
-                    labels.append(f"{nice_date} ({test['date']})")
-                except ValueError:
-                    labels.append(f"Unknown ({test['date'] or 'missing date'})")
+            # Create labels from the pre-formatted API response
+            labels = [test["label"] for test in available_tests]
             
             choice = st.selectbox("Choose a test result to import:", labels)
             
@@ -135,7 +129,7 @@ def thorne_tab(username, timepoint_id="T_01"):
                             thorne_df = scrape_thorne_gut_report_by_date(
                                 st.session_state.thorne_temp_email,
                                 st.session_state.thorne_temp_password,
-                                selected_test["url"],
+                                selected_test["local_date"],
                                 status
                             )
                             
