@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import io
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 from utils.toxicology_utils import extract_results_to_dataframe, humanize_result_text
 
 
@@ -9,10 +9,10 @@ def toxicology_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01")
     st.markdown(f"<h1>{timepoint_modifier} Toxicology</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
     bucket = user_supabase.storage.from_("data")
-    csv_key = f"{username}/{timepoint_id}/toxicology.csv"
+    csv_key = build_supabase_path(username, timepoint_id, "toxicology.csv")
 
     # Check if CSV already exists
-    file_list = bucket.list(path=f"{username}/{timepoint_id}")
+    file_list = bucket.list(path=f"{username}/{timepoint_modifier}/")
     csv_exists = any(f["name"] == "toxicology.csv" for f in file_list)
 
     if csv_exists:

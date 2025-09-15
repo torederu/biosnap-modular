@@ -4,16 +4,16 @@ import os
 import time
 import fitz
 from utils.redaction_utils import redact_prenuvo_pdf
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 import io
 from datetime import datetime
 import streamlit.components.v1 as components
 
 def prenuvo_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
-    filename = f"{username}/redacted_prenuvo_report.pdf"
+    filename = build_supabase_path(username, timepoint_id, "redacted_prenuvo_report.pdf")
     bucket = user_supabase.storage.from_("data")
-    file_list = bucket.list(path=f"{username}/{timepoint_id}")
+    file_list = bucket.list(path=f"{username}/{timepoint_modifier}/")
     file_exists = any(f["name"] == "redacted_prenuvo_report.pdf" for f in file_list)
     st.markdown(f"<h1>{timepoint_modifier} Prenuvo</h1>", unsafe_allow_html=True)
     if file_exists:

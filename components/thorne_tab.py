@@ -4,17 +4,16 @@ import io
 import time
 from datetime import datetime
 from utils.scraping_utils import scrape_thorne_gut_report, get_thorne_available_tests, scrape_thorne_gut_report_by_date
-from supabase_utils import get_user_supabase
+from supabase_utils import get_supabase_bucket, build_supabase_path
 
 def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
-    user_supabase = get_user_supabase()
+    bucket = get_supabase_bucket()
     # === Try to restore saved CSV (stateless ghost-block logic)
     if not st.session_state.get("thorne_csv_ready"):
         try:
-            bucket = user_supabase.storage.from_("data")
-            thorne_filename = f"{username}/{timepoint_id}/thorne.csv"
+            thorne_filename = build_supabase_path(username, timepoint_id, "thorne.csv")
             res = bucket.download(thorne_filename)
-            files = bucket.list(path=f"{username}/{timepoint_id}/")
+            files = bucket.list(path=f"{username}/{timepoint_modifier}/")
             in_list = any(f["name"] == "thorne.csv" for f in files)
             if res and len(res) > 0 and not in_list:
                 st.session_state.thorne_csv_ready = False
@@ -40,13 +39,13 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
             st.session_state.pop("thorne_email", None)
             st.session_state.pop("thorne_password", None)
             try:
-                bucket = user_supabase.storage.from_("data")
-                bucket.remove([f"{username}/{timepoint_id}/thorne.csv"])
+                thorne_filename = build_supabase_path(username, timepoint_id, "thorne.csv")
+                bucket.remove([thorne_filename])
                 max_attempts = 20
                 file_still_exists = True
                 for attempt in range(max_attempts):
                     time.sleep(3)
-                    files = bucket.list(path=f"{username}/{timepoint_id}/")
+                    files = bucket.list(path=f"{username}/{timepoint_modifier}/")
                     file_still_exists = any(f["name"] == "thorne.csv" for f in files)
                     if not file_still_exists:
                         break
@@ -153,13 +152,13 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                             
                             # Upload to Supabase
                             try:
-                                bucket = user_supabase.storage.from_("data")
-                                bucket.remove([f"{username}/{timepoint_id}/thorne.csv"])
+                                thorne_filename = build_supabase_path(username, timepoint_id, "thorne.csv")
+                                bucket.remove([thorne_filename])
                             except Exception:
                                 pass
                             
                             response = bucket.upload(
-                                path=f"{username}/{timepoint_id}/thorne.csv",
+                                path=thorne_filename,
                                 file=thorne_csv_bytes,
                                 file_options={"content-type": "text/csv"}
                             )
@@ -181,3 +180,4 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                         finally:
                                 status.empty()
         
+

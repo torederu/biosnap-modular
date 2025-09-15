@@ -2,17 +2,17 @@ import streamlit as st
 import pandas as pd
 import io
 import time
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 
 def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     st.markdown(f"<h1>{timepoint_modifier} Biostarks</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
-    biostarks_filename = f"{username}/{timepoint_id}/biostarks.csv"
+    biostarks_filename = build_supabase_path(username, timepoint_id, "biostarks.csv")
     bucket = user_supabase.storage.from_("data")
     if "biostarks_df" not in st.session_state:
         try:
             biostarks_bytes = bucket.download(biostarks_filename)
-            files = bucket.list(path=f"{username}/{timepoint_id}")
+            files = bucket.list(path=f"{username}/{timepoint_modifier}/")
             in_list = any(f["name"] == "biostarks.csv" for f in files)
             if biostarks_bytes and len(biostarks_bytes) > 0 and in_list:
                 st.session_state.biostarks_df = pd.read_csv(io.BytesIO(biostarks_bytes))

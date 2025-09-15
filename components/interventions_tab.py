@@ -3,13 +3,13 @@ import pandas as pd
 import io
 import time
 from datetime import datetime
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 
 def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
     if "intervention_plan_df" not in st.session_state:
         try:
-            plan_filename = f"{username}/{timepoint_id}/intervention_plan.csv"
+            plan_filename = build_supabase_path(username, timepoint_id, "intervention_plan.csv")
             bucket = user_supabase.storage.from_("data")
             metadata = bucket.list(username)
             filenames = [f["name"] for f in metadata]
@@ -79,7 +79,7 @@ def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                     plan_df = pd.DataFrame([(k, v) for k, v in plans.items()], columns=["Category", "Plan"])
                     st.session_state.intervention_plan_df = plan_df
                     csv_bytes = plan_df.to_csv(index=False).encode()
-                    plan_filename = f"{username}/{timepoint_id}/intervention_plan.csv"
+                    plan_filename = build_supabase_path(username, timepoint_id, "intervention_plan.csv")
                     bucket = user_supabase.storage.from_("data")
                     try:
                         bucket.remove([plan_filename])

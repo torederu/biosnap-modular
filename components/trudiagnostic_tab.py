@@ -4,16 +4,16 @@ import os
 import time
 import fitz
 from utils.redaction_utils import redact_trudiagnostic_pdf
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 import io
 from datetime import datetime
 import streamlit.components.v1 as components
 
 def trudiagnostic_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
-    filename = f"{username}/redacted_trudiagnostic_report.pdf"
+    filename = build_supabase_path(username, timepoint_id, "redacted_trudiagnostic_report.pdf")
     bucket = user_supabase.storage.from_("data")
-    file_list = bucket.list(path=f"{username}/{timepoint_id}")
+    file_list = bucket.list(path=f"{username}/{timepoint_modifier}/")
     file_exists = any(f["name"] == "redacted_trudiagnostic_report.pdf" for f in file_list)
     st.markdown(f"<h1>{timepoint_modifier} Trudiagnostic</h1>", unsafe_allow_html=True)
     if file_exists:
@@ -94,7 +94,7 @@ def trudiagnostic_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
             <li>Open the <strong>"Provider Summary Report"</strong></li>
             <li>Click <strong>"Print"</strong> in the top right corner</li>
             <li>In the print window, choose <strong>"Save as PDF"</strong> as the destination<br>
-            <span style='font-size: 0.95em;'>(On Macs, select “PDF” in the dropdown menu. On Windows, choose “Microsoft Print to PDF” as your printer.)</span></li>
+            <span style='font-size: 0.95em;'>(On Macs, select "PDF" in the dropdown menu. On Windows, choose "Microsoft Print to PDF" as your printer.)</span></li>
             <li>Save the file to your computer</li>
             <li>Upload it below</li>
           </ol>

@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 import io
-from supabase_utils import get_user_supabase
+from supabase_utils import get_user_supabase, build_supabase_path
 
 def thorne2_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     st.markdown(f"<h1>{timepoint_modifier} Thorne Community Report</h1>", unsafe_allow_html=True)
     user_supabase = get_user_supabase()
-    filename = f"{username}/{timepoint_id}/thorne2.csv"
+    filename = build_supabase_path(username, timepoint_id, "thorne2.csv")
     bucket = user_supabase.storage.from_("data")
-    file_list = bucket.list(path=f"{username}/{timepoint_id}")
+    file_list = bucket.list(path=f"{username}/{timepoint_modifier}/")
     file_exists = any(f["name"] == "thorne2.csv" for f in file_list)
     
     if file_exists:
