@@ -13,4 +13,4 @@ def matter_overview_tab(username: str, timepoint_id="T_01", timepoint_modifier="
         st.markdown("Overview of Matter data from Jan 2025 - May 2025. Double-click any cell to reveal its full contents.")
         st.dataframe(matter_df)
     except Exception as e:
-        st.info("There was an error retrieving your Matter data. Please contact admin.") 
+        st.info("Your Matter data has not yet been received and/or analyzed. If you believe this is an error, please contact admin.") 

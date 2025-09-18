@@ -13,4 +13,4 @@ def oprl_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01"):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(oprl_df)
     except Exception as e:
-        st.info("There was an error retrieving your OPRL data. Please contact admin.") 
+        st.info("Your OPRL data has not yet been received and/or analyzed. If you believe this is an error, please contact admin.") 

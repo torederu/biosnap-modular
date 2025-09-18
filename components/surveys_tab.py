@@ -13,4 +13,4 @@ def surveys_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(surveys_df)
     except Exception as e:
-        st.info("There was an error retrieving your survey data. Please contact admin.")
+        st.info("Your survey data has not yet been received and/or analyzed. If you believe this is an error, please contact admin.")

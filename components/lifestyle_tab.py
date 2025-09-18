@@ -13,4 +13,4 @@ def lifestyle_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(lifestyle_df)
     except Exception as e:
-        st.info("There was an error retrieving your lifestyle data. Please contact admin.") 
+        st.info("Your lifestyle data has not yet been received and/or analyzed. If you believe this is an error, please contact admin.") 

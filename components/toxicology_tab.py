@@ -7,6 +7,12 @@ from utils.toxicology_utils import extract_results_to_dataframe, humanize_result
 
 def toxicology_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01"):
     st.markdown(f"<h1>{timepoint_modifier} Toxicology</h1>", unsafe_allow_html=True)
+    
+    # Check if this is T02 - no data collected
+    if timepoint_id == "T_02":
+        st.info("No toxicology data were collected for Time Point 02.")
+        return
+    
     user_supabase = get_user_supabase()
     bucket = user_supabase.storage.from_("data")
     csv_key = build_supabase_path(username, timepoint_id, "toxicology.csv")

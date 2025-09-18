@@ -13,4 +13,4 @@ def clinical_intake_tab(username, timepoint_id="T_01", timepoint_modifier="T01")
         st.markdown("Double-click any cell to reveal its full contents.")
         st.dataframe(clinical_df)
     except Exception as e:
-        st.info("There was an error retrieving your clinical intake data. Please contact admin.")
+        st.info("Your clinical intake data has not yet been received and/or analyzed. If you believe this is an error, please contact admin.")
