@@ -72,7 +72,7 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     </div>""", unsafe_allow_html=True)
         st.markdown("""
     <div style='font-size:17.5px; line-height:1.6; margin-top:0.5rem; margin-bottom:1.5rem;'>
-    <strong>Your Information Stays Private:</strong> We do not store your credentials. They are used once to connect to Thorne to download your data, and then are immediately erased from memory.
+    <strong>Your Information Stays Private:</strong> We do not store your credentials. They are used to connect to Thorne to download your data, and then are erased from memory.
     </div>""", unsafe_allow_html=True)
         
         # Show step-by-step workflow
@@ -113,7 +113,9 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
             # Create labels from the pre-formatted API response
             labels = [test["label"] for test in available_tests]
             
-            choice = st.selectbox("Choose a test result to import:", labels)
+            # Convert T01 -> 01, T02 -> 02, etc.
+            timepoint_number = timepoint_modifier.replace("T", "")
+            choice = st.selectbox(f"Please select the test result that corresponds to Time Point {timepoint_number}:", labels)
             
             
             if st.button("Import Selected Test"):

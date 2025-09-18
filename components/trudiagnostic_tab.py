@@ -85,18 +85,27 @@ def trudiagnostic_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         if st.session_state.get("trudiagnostic_issue_submitted"):
             st.success("Issue submitted.")
     else:
-        st.markdown("<div style='font-size:17.5px; line-height:1.6'>Please upload your Trudiagnostic Provider Summary:</div>", unsafe_allow_html=True)
-        st.markdown("""
+        # Convert T01 -> 01, T02 -> 02, etc.
+        timepoint_number = timepoint_modifier.replace("T", "")
+        
+        # Determine report type based on timepoint
+        if timepoint_id == "T_01":
+            report_type = "TruAge Patient Summary Report"
+        else:
+            report_type = "Advanced TruAge Report"
+        
+        st.markdown(f"<div style='font-size:17.5px; line-height:1.6'>Please upload your Trudiagnostic Provider Summary:</div>", unsafe_allow_html=True)
+        st.markdown(f"""
         <div style='font-size:15px; line-height:1.6; margin-bottom:0.5rem; padding-left:1.5rem'>
           <ol style="margin-top: 0; margin-bottom: 0;">
-            <li>Log in to <a href='https://login.trudiagnostic.com/' target='_blank'>Trudiagnostic</a></li>
-            <li>Click <strong>"Reports"</strong> in the left menu bar</li>
-            <li>Open the <strong>"Provider Summary Report"</strong></li>
-            <li>Click <strong>"Print"</strong> in the top right corner</li>
-            <li>In the print window, choose <strong>"Save as PDF"</strong> as the destination<br>
+            <li>Log in to <a href='https://login.trudiagnostic.com/' target='_blank'>Trudiagnostic</a>.</li>
+            <li>Click <strong>"Reports"</strong> in the left menu bar.</li>
+            <li>Open the <strong>"{report_type}"</strong> corresponding to <strong>Time Point {timepoint_number}</strong>.</li>
+            <li>Navigate to <strong>File → Print</strong> in the top menu bar.</li>
+            <li>In the print window, choose <strong>"Save as PDF"</strong> as the destination.<br>
             <span style='font-size: 0.95em;'>(On Macs, select "PDF" in the dropdown menu. On Windows, choose "Microsoft Print to PDF" as your printer.)</span></li>
-            <li>Save the file to your computer</li>
-            <li>Upload it below</li>
+            <li>Save the file to your computer.</li>
+            <li>Upload it below.</li>
           </ol>
         </div>
         """, unsafe_allow_html=True)

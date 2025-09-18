@@ -51,26 +51,30 @@ def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                         with st.expander("Where do I find this?"):
                             st.markdown(expander_text)
                 st.text_input(label, key=label, label_visibility="collapsed")
-            input_metric("Longevity NAD+ Score", """• Log in to [results.biostarks.com](https://results.biostarks.com)  
-            • Look for your **Longevity Score** (0–100)""")
+            
+            # Convert T01 -> 01, T02 -> 02, etc.
+            timepoint_number = timepoint_modifier.replace("T", "")
+            
+            input_metric("Longevity NAD+ Score", f"""• Log in to [results.biostarks.com](https://results.biostarks.com)  
+            • Look for the **Longevity Score** (0-100) corresponding to Time Point {timepoint_number}""")
             st.divider()
-            input_metric("NAD+ Levels", """• Log in to [results.biostarks.com](https://results.biostarks.com)  
-            • Click your **Longevity Score**  
+            input_metric("NAD+ Levels", f"""• Log in to [results.biostarks.com](https://results.biostarks.com)  
+            • Click the **Longevity Score** corresponding to Time Point {timepoint_number}  
             • Hover over the **NAD+** hexagon  
             • Value will be shown in **ug/gHb**""")
             st.divider()
-            input_metric("Magnesium Levels", """• Log in to [results.biostarks.com](https://results.biostarks.com)  
-            • Click your **Longevity Score**  
+            input_metric("Magnesium Levels", f"""• Log in to [results.biostarks.com](https://results.biostarks.com)  
+            • Click the **Longevity Score** corresponding to Time Point {timepoint_number}  
             • Hover over the **Mg** hexagon  
             • Value will be shown in **ug/gHb**""")
             st.divider()
-            input_metric("Selenium Levels", """• Log in to [results.biostarks.com](https://results.biostarks.com)  
-            • Click your **Longevity Score**  
+            input_metric("Selenium Levels", f"""• Log in to [results.biostarks.com](https://results.biostarks.com)  
+            • Click the **Longevity Score** corresponding to Time Point {timepoint_number}  
             • Hover over the **Se** hexagon  
             • Value will be shown in **ug/gHb**""")
             st.divider()
-            input_metric("Zinc Levels", """• Log in to [results.biostarks.com](https://results.biostarks.com)  
-            • Click your **Longevity Score**  
+            input_metric("Zinc Levels", f"""• Log in to [results.biostarks.com](https://results.biostarks.com)  
+            • Click the **Longevity Score** corresponding to Time Point {timepoint_number}  
             • Hover over the **Zn** hexagon  
             • Value will be shown in **ug/gHb**""")
             submitted = st.form_submit_button("Submit")

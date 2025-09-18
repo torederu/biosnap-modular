@@ -31,13 +31,20 @@ def function_health_tab(username, timepoint_id="T_01", timepoint_modifier="T01")
         st.dataframe(st.session_state.function_df)
         st.success("Import successful!")
     else:
+        st.markdown(f"<div style='font-size:17.5px; line-height:1.6'>Please import your Function Health data:</div>", unsafe_allow_html=True)
+        # Convert T01 -> 01, T02 -> 02, etc.
+        timepoint_number = timepoint_modifier.replace("T", "")
+        st.markdown(f"""
+        <div style='font-size:15px; line-height:1.6; margin-bottom:0.5rem; padding-left:1.5rem'>
+          <ol style="margin-top: 0; margin-bottom: 0;">
+            <li>Confirm that your <a href='https://www.functionhealth.com/' target='_blank'>Function Health account</a> is up to date with data from <strong>Time Point {timepoint_number}</strong>.</li>
+            <li>When your Function Health account is completely up to date, enter your credentials below to connect and import your data.</li>
+          </ol>
+        </div>
+        """, unsafe_allow_html=True)
         st.markdown("""
-    <div style='font-size:17.5px; line-height:1.6'>
-    Please enter your Function Health credentials to connect and download your data.
-    </div>""", unsafe_allow_html=True)
-        st.markdown("""
-    <div style='font-size:17.5px; line-height:1.6; margin-top:0.5rem; margin-bottom:1.5rem;'>
-    <strong>Your Information Stays Private:</strong> We do not store your credentials. They are used once to connect to Function Health to download your data, and then are immediately erased from memory.
+    <div style='font-size:17.5px; line-height:1.6; margin-top:-0.3rem; margin-bottom:1.5rem;'>
+    <strong>Your Information Stays Private:</strong> We do not store your credentials. They are used to connect to Function Health to download your data, and then are erased from memory.
     </div>""", unsafe_allow_html=True)
         
         with st.form("function_login_form"):
@@ -94,4 +101,3 @@ def function_health_tab(username, timepoint_id="T_01", timepoint_modifier="T01")
                     st.error(f"Import failed: {type(e).__name__} — {e}")
                 finally:
                     status.empty()
-
