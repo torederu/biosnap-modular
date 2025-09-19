@@ -41,12 +41,12 @@ def toxicology_tab(username: str, timepoint_id="T_01", timepoint_modifier="T01")
             """
             <div style='font-size:15px; line-height:1.6; margin-bottom:0.5rem; padding-left:1.5rem'>
               <ol style="margin-top: 0; margin-bottom: 0;">
-                <li>Find the email containing your toxicology report (titled "View your Quest test results")</li>
-                <li>Submit your test registration confirmation code and personal details to log in</li>
-                <li>Click "View Online Results" on the right hand side</li>
-                <li>Click "Print Report" in the top right of the report area</li>
-                <li>Select "Simple Report" from the dropdown menu</li>
-                <li>Download the PDF file and upload it below</li>
+                <li>Find the email containing your toxicology report - titled <strong>"View your Quest test results."</strong></li>
+                <li>Submit your test registration confirmation code and personal details to log in.</li>
+                <li>Click <strong>"View Online Results"</strong> on the right hand side.</li>
+                <li>Click <strong>"Print Report"</strong> in the top right of the report area.</li>
+                <li>Select <strong>"Simple Report"</strong> from the dropdown menu.</li>
+                <li>Download the PDF file and upload it below.</li>
               </ol>
             </div>
             """,

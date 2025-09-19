@@ -96,10 +96,10 @@ def prenuvo_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         st.markdown("""
         <div style='font-size:15px; line-height:1.6; margin-bottom:0.5rem; padding-left:1.5rem'>
           <ol style="margin-top: 0; margin-bottom: 0;">
-            <li>Log in to <a href='https://login.prenuvo.com/' target='_blank'>Prenuvo</a></li>
-            <li>Click <strong>View Official Physician Report</strong></li>
-            <li>Download the PDF</li>
-            <li>Upload it below</li>
+            <li>Log in to <a href='https://login.prenuvo.com/' target='_blank'>Prenuvo</a>.</li>
+            <li>Click <strong>"View Official Physician Report."</strong></li>
+            <li>Download the PDF.</li>
+            <li>Upload it below.</li>
           </ol>
         </div>
         """, unsafe_allow_html=True)
