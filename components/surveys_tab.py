@@ -36,7 +36,7 @@ def surveys_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         st.dataframe(surveys_df)
     elif form_submitted:
         # Show success message if form was submitted but data not yet processed
-        st.success("Thank you! We will retrieve and process your survey responses shortly.")
+        st.success("We will retrieve and process your survey responses shortly!")
     else:
         # Show instructions for completing surveys
         st.markdown(f"""

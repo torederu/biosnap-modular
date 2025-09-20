@@ -36,7 +36,7 @@ def matter_overview_tab(username: str, timepoint_id="T_01", timepoint_modifier="
         st.dataframe(matter_df)
     elif form_submitted:
         # Show success message if form was submitted but data not yet processed
-        st.success("Thank you! We will retrieve and process your memory data shortly.")
+        st.success("We will retrieve and process your memory data shortly!")
     else:
         # Show instructions for submitting memory data
         st.markdown(f"""

@@ -37,7 +37,7 @@ def clinical_intake_tab(username, timepoint_id="T_01", timepoint_modifier="T01")
     elif form_submitted:
         # Show success message if form was submitted but data not yet processed
         timepoint_number = timepoint_modifier.replace("T", "")
-        st.success("Thank you! We will retrieve and process your form responses shortly.")
+        st.success("We will retrieve and process your form responses shortly!")
     else:
         # Show instructions for completing the form
         timepoint_number = timepoint_modifier.replace("T", "")
