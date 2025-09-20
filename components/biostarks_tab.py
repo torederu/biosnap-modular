@@ -9,30 +9,37 @@ def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
     biostarks_filename = build_supabase_path(username, timepoint_id, "biostarks.csv")
     bucket = user_supabase.storage.from_("data")
-    if "biostarks_df" not in st.session_state:
+    
+    # Create timepoint-scoped session state keys
+    df_key = f"biostarks_df_{timepoint_modifier}"
+    reset_key = f"reset_biostarks_{timepoint_modifier}"
+    submitted_key = f"biostarks_submitted_{timepoint_modifier}"
+    deleted_key = f"biostarks_deleted_{timepoint_modifier}"
+    
+    if df_key not in st.session_state:
         try:
             biostarks_bytes = bucket.download(biostarks_filename)
             files = bucket.list(path=f"{username}/{timepoint_modifier}/")
             in_list = any(f["name"] == "biostarks.csv" for f in files)
             if biostarks_bytes and len(biostarks_bytes) > 0 and in_list:
-                st.session_state.biostarks_df = pd.read_csv(io.BytesIO(biostarks_bytes))
+                st.session_state[df_key] = pd.read_csv(io.BytesIO(biostarks_bytes))
             else:
-                st.session_state.biostarks_df = pd.DataFrame(columns=["Metric", "Value"])
+                st.session_state[df_key] = pd.DataFrame(columns=["Metric", "Value"])
         except Exception:
-            st.session_state.biostarks_df = pd.DataFrame(columns=["Metric", "Value"])
-    if st.session_state.get("reset_biostarks", False):
+            st.session_state[df_key] = pd.DataFrame(columns=["Metric", "Value"])
+    if st.session_state.get(reset_key, False):
         with st.spinner("Deleting file from database..."):
             try:
                 bucket.remove([biostarks_filename])
-                st.session_state.biostarks_deleted = True
+                st.session_state[deleted_key] = True
             except Exception as e:
                 st.warning(f"Failed to delete file: {e}")
-                st.session_state.biostarks_deleted = False
-        for key in ["reset_biostarks", "biostarks_submitted"]:
+                st.session_state[deleted_key] = False
+        for key in [reset_key, submitted_key]:
             st.session_state.pop(key, None)
-        st.session_state.biostarks_df = pd.DataFrame(columns=["Metric", "Value"])
+        st.session_state[df_key] = pd.DataFrame(columns=["Metric", "Value"])
         st.rerun()
-    if st.session_state.biostarks_df.empty:
+    if st.session_state[df_key].empty:
         st.markdown("""
         <div style='font-size:17.5px; line-height:1.6'>
         Please log in to <a href='https://results.biostarks.com/' target='_blank'>Biostarks</a> and fill in the fields below with the relevant values.<br><br>
@@ -98,7 +105,7 @@ def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                     ["Zinc Levels", st.session_state["Zinc Levels"]],
                 ], columns=["Metric", "Value"])
                 with st.spinner("Saving to database..."):
-                    st.session_state.biostarks_df = biostarks_df
+                    st.session_state[df_key] = biostarks_df
                     biostarks_csv_bytes = biostarks_df.to_csv(index=False).encode()
                     try:
                         bucket.remove([biostarks_filename])
@@ -110,9 +117,9 @@ def biostarks_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                         file_options={"content-type": "text/csv"}
                     )
                     time.sleep(1)
-                    st.session_state["biostarks_submitted"] = True
+                    st.session_state[submitted_key] = True
                     st.rerun()
     else:
-        st.dataframe(st.session_state.biostarks_df)
+        st.dataframe(st.session_state[df_key])
         st.success("Upload successful!")
         # Removed Start Over button 
