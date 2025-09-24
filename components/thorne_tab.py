@@ -8,34 +8,44 @@ from supabase_utils import get_supabase_bucket, build_supabase_path
 
 def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     bucket = get_supabase_bucket()
+    
+    # Create timepoint-scoped session state keys
+    csv_ready_key = f"thorne_csv_ready_{timepoint_modifier}"
+    csv_key = f"thorne_csv_{timepoint_modifier}"
+    df_key = f"thorne_df_{timepoint_modifier}"
+    filename_key = f"thorne_csv_filename_{timepoint_modifier}"
+    uploaded_key = f"thorne_supabase_uploaded_{timepoint_modifier}"
+    deleting_key = f"deleting_thorne_in_progress_{timepoint_modifier}"
+    init_key = f"to_initialize_thorne_csv_{timepoint_modifier}"
+    
     # === Try to restore saved CSV (stateless ghost-block logic)
-    if not st.session_state.get("thorne_csv_ready"):
+    if not st.session_state.get(csv_ready_key):
         try:
             thorne_filename = build_supabase_path(username, timepoint_id, "thorne.csv")
             res = bucket.download(thorne_filename)
             files = bucket.list(path=f"{username}/{timepoint_modifier}/")
             in_list = any(f["name"] == "thorne.csv" for f in files)
             if res and len(res) > 0 and not in_list:
-                st.session_state.thorne_csv_ready = False
+                st.session_state[csv_ready_key] = False
             elif res and len(res) > 0:
                 thorne_df = pd.read_csv(io.BytesIO(res))
-                st.session_state.thorne_csv = res
-                st.session_state.thorne_df = thorne_df
-                st.session_state.thorne_csv_ready = True
+                st.session_state[csv_key] = res
+                st.session_state[df_key] = thorne_df
+                st.session_state[csv_ready_key] = True
             else:
-                st.session_state.thorne_csv_ready = False
+                st.session_state[csv_ready_key] = False
         except Exception:
-            st.session_state.thorne_csv_ready = False
+            st.session_state[csv_ready_key] = False
     
     st.markdown(f"<h1>{timepoint_modifier} Thorne Overview</h1>", unsafe_allow_html=True)
     
-    if st.session_state.get("deleting_thorne_in_progress", False):
+    if st.session_state.get(deleting_key, False):
         with st.spinner("Deleting file from database..."):
-            st.session_state.pop("thorne_csv_ready", None)
-            st.session_state.pop("thorne_csv", None)
-            st.session_state.pop("thorne_df", None)
-            st.session_state.pop("thorne_csv_filename", None)
-            st.session_state.pop("thorne_supabase_uploaded", None)
+            st.session_state.pop(csv_ready_key, None)
+            st.session_state.pop(csv_key, None)
+            st.session_state.pop(df_key, None)
+            st.session_state.pop(filename_key, None)
+            st.session_state.pop(uploaded_key, None)
             st.session_state.pop("thorne_email", None)
             st.session_state.pop("thorne_password", None)
             try:
@@ -55,15 +65,15 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                     st.session_state.skip_restore = True
                     st.session_state.deletion_successful = True
                     st.session_state.just_deleted = True
-                    st.session_state.pop("deleting_thorne_in_progress", None)
+                    st.session_state.pop(deleting_key, None)
                     st.rerun()
                 else:
                     st.error("File deletion timed out after 60 seconds. Please try again or check your connection.")
             except Exception as e:
                 st.error(f"Something went wrong while deleting your file: {e}")
-    elif st.session_state.get("thorne_csv_ready") and "thorne_df" in st.session_state:
+    elif st.session_state.get(csv_ready_key) and df_key in st.session_state:
         st.markdown("Double-click any cell to reveal its full contents.")
-        st.dataframe(st.session_state.thorne_df)
+        st.dataframe(st.session_state[df_key])
         st.success("Import successful!")
     else:
         st.markdown("""
@@ -147,10 +157,10 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                             st.session_state.pop("thorne_password", None)
                             
                             thorne_csv_bytes = thorne_df.to_csv(index=False).encode()
-                            st.session_state.thorne_csv = thorne_csv_bytes
-                            st.session_state.thorne_df = thorne_df
-                            st.session_state.thorne_csv_filename = f"{username}_thorne.csv"
-                            st.session_state.thorne_csv_file = thorne_csv_bytes
+                            st.session_state[csv_key] = thorne_csv_bytes
+                            st.session_state[df_key] = thorne_df
+                            st.session_state[filename_key] = f"{username}_thorne.csv"
+                            st.session_state[f"thorne_csv_file_{timepoint_modifier}"] = thorne_csv_bytes
                             
                             # Upload to Supabase
                             try:
@@ -168,13 +178,13 @@ def thorne_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                             if "error" in res_data and res_data["error"]:
                                 st.error("Upload failed.")
                             else:
-                                st.session_state.thorne_supabase_uploaded = True
+                                st.session_state[uploaded_key] = True
                             
                             status.markdown(
                                 '<div style="margin-left:2.3em; font-size:1rem; font-weight:400; line-height:1.2; margin-top:-0.6em; margin-bottom:0.1em;">⤷ Import successful!</div>',
                                 unsafe_allow_html=True
                             )
-                            st.session_state.to_initialize_thorne_csv = True
+                            st.session_state[init_key] = True
                             st.rerun()
                             
                         except Exception as e:

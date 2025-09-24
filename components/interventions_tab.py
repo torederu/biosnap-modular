@@ -7,28 +7,40 @@ from supabase_utils import get_user_supabase, build_supabase_path
 
 def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
     user_supabase = get_user_supabase()
-    if "intervention_plan_df" not in st.session_state:
+    
+    # Create timepoint-scoped session state keys
+    df_key = f"intervention_plan_df_{timepoint_modifier}"
+    timestamp_key = f"intervention_plan_timestamp_{timepoint_modifier}"
+    step_key = f"intervention_step_{timepoint_modifier}"
+    selected_areas_key = f"intervention_selected_areas_{timepoint_modifier}"
+    
+    if df_key not in st.session_state:
         try:
             plan_filename = build_supabase_path(username, timepoint_id, "intervention_plan.csv")
             bucket = user_supabase.storage.from_("data")
-            metadata = bucket.list(username)
-            filenames = [f["name"] for f in metadata]
-            if "intervention_plan.csv" in filenames:
-                matching = next((f for f in metadata if f["name"] == "intervention_plan.csv"), None)
+            # FIXED: Check files in the timepoint-specific directory, not user root
+            files = bucket.list(path=f"{username}/{timepoint_modifier}/")
+            in_list = any(f["name"] == "intervention_plan.csv" for f in files)
+            
+            if in_list:
+                # Get timestamp from file metadata
+                matching = next((f for f in files if f["name"] == "intervention_plan.csv"), None)
                 if matching and "updated_at" in matching:
                     from dateutil import parser
-                    st.session_state.intervention_plan_timestamp = parser.parse(matching["updated_at"]).strftime("%B %d, %Y")
+                    st.session_state[timestamp_key] = parser.parse(matching["updated_at"]).strftime("%B %d, %Y")
+                
                 bytes_data = bucket.download(plan_filename)
                 if isinstance(bytes_data, bytes):
                     df = pd.read_csv(io.BytesIO(bytes_data))
-                    st.session_state.intervention_plan_df = df
-        except:
+                    st.session_state[df_key] = df
+        except Exception:
             pass
-    if "intervention_plan_df" in st.session_state:
-        timestamp = st.session_state.get("intervention_plan_timestamp")
+    
+    if df_key in st.session_state:
+        timestamp = st.session_state.get(timestamp_key)
         st.markdown(f"<h1>{timepoint_modifier} Interventions</h1>", unsafe_allow_html=True)
         st.markdown(f"Saved on {timestamp}. Double-click any cell to reveal its full contents.")
-        st.dataframe(st.session_state.intervention_plan_df)
+        st.dataframe(st.session_state[df_key])
     else:
         st.markdown(f"<h1>{timepoint_modifier} Interventions</h1>", unsafe_allow_html=True)
         st.markdown("""
@@ -52,32 +64,34 @@ def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
             "Sleep": "Example: Set 10:30 PM bedtime, limit screen use after 9 PM, take magnesium glycinate.",
             "Addiction Dependency": "Example: Reduce phone or social media use. Replace late-night scrolling with journaling. Limit alcohol to 1x/week. Track urges daily."
         }
-        if "intervention_step" not in st.session_state:
-            st.session_state.intervention_step = "select_areas"
-        if st.session_state.intervention_step == "select_areas":
+        
+        if step_key not in st.session_state:
+            st.session_state[step_key] = "select_areas"
+            
+        if st.session_state[step_key] == "select_areas":
             st.markdown("### Choose your focus areas")
             with st.form("intervention_focus_area_form"):
-                selected = st.multiselect("Select areas to focus on:", focus_areas, default=st.session_state.get("intervention_selected_areas", []))
+                selected = st.multiselect("Select areas to focus on:", focus_areas, default=st.session_state.get(selected_areas_key, []))
                 proceed = st.form_submit_button("Next")
                 if proceed:
-                    st.session_state.intervention_selected_areas = selected
-                    st.session_state.intervention_step = "enter_plans"
+                    st.session_state[selected_areas_key] = selected
+                    st.session_state[step_key] = "enter_plans"
                     st.rerun()
-        elif st.session_state.intervention_step == "enter_plans":
+        elif st.session_state[step_key] == "enter_plans":
             st.markdown("### Describe Your Plans")
             with st.spinner("Loading plan fields..."):
                 with st.form("intervention_plan_entry_form"):
                     plans = {}
-                    for area in st.session_state.intervention_selected_areas:
+                    for area in st.session_state[selected_areas_key]:
                         plans[area] = st.text_area(
                             f"Plan for {area}",
-                            key=f"plan_{area}",
+                            key=f"plan_{area}_{timepoint_modifier}",
                             placeholder=examples.get(area, f"What do you want to do to improve your {area.lower()} over the next 8 weeks?")
                         )
                     submitted = st.form_submit_button("Save My Plan")
                 if submitted:
                     plan_df = pd.DataFrame([(k, v) for k, v in plans.items()], columns=["Category", "Plan"])
-                    st.session_state.intervention_plan_df = plan_df
+                    st.session_state[df_key] = plan_df
                     csv_bytes = plan_df.to_csv(index=False).encode()
                     plan_filename = build_supabase_path(username, timepoint_id, "intervention_plan.csv")
                     bucket = user_supabase.storage.from_("data")
@@ -90,5 +104,5 @@ def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
                         file=csv_bytes,
                         file_options={"content-type": "text/csv"}
                     )
-                    st.session_state.intervention_plan_timestamp = datetime.utcnow().strftime("%B %d, %Y")
+                    st.session_state[timestamp_key] = datetime.utcnow().strftime("%B %d, %Y")
                     st.rerun() 
