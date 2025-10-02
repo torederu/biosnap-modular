@@ -6,7 +6,6 @@ from components.prenuvo_tab import prenuvo_tab
 from components.trudiagnostic_tab import trudiagnostic_tab
 from components.biostarks_tab import biostarks_tab
 from components.surveys_tab import surveys_tab
-from components.interventions_tab import interventions_tab
 from components.clinical_intake_tab import clinical_intake_tab
 from components.lifestyle_tab import lifestyle_tab
 from components.thorne2_tab import thorne2_tab
@@ -49,7 +48,6 @@ def render_timepoint_layout(timepoint_id, timepoint_name, authenticator=None):
         "Labs", 
         "Emotion & Cognition",
         "Habits & Performance",
-        "Interventions"
     ]
     
     main_tabs = st.tabs(main_tab_names)
@@ -109,6 +107,3 @@ def render_timepoint_layout(timepoint_id, timepoint_name, authenticator=None):
         with hp_tabs[1]:
             oprl_tab(display_username, timepoint_id, timepoint_modifier)
 
-    # Interventions
-    with main_tabs[4]:
-        interventions_tab(display_username, timepoint_id, timepoint_modifier)
