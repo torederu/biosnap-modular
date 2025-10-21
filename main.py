@@ -24,9 +24,15 @@ elif not auth_status:
     st.stop()
 
 # Only continue if authenticated
-# Add logout button to sidebar using authenticator's method
+# Add logout button to sidebar
 with st.sidebar:
     authenticator.logout("Logout", location='main')
+
+# Clear session state if username changed (logout→login transition)
+if "last_username" in st.session_state and st.session_state["last_username"] != username:
+    st.session_state.clear()
+    st.rerun()
+st.session_state["last_username"] = username
 
 # Define the Welcome page content
 def welcome_page():

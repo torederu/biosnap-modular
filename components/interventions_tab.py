@@ -18,7 +18,7 @@ def interventions_tab(username, timepoint_id="T_01", timepoint_modifier="T01"):
         try:
             plan_filename = build_supabase_path(username, timepoint_id, "intervention_plan.csv")
             bucket = user_supabase.storage.from_("data")
-            # FIXED: Check files in the timepoint-specific directory, not user root
+            # Check files in the timepoint-specific directory, not user root
             files = bucket.list(path=f"{username}/{timepoint_modifier}/")
             in_list = any(f["name"] == "intervention_plan.csv" for f in files)
             
