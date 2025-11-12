@@ -57,12 +57,16 @@ def welcome_page():
 
 # Create individual page functions for timepoints
 def timepoint_01():
+    status_placeholder = st.empty()
     with st.spinner("Please wait while we update and display your Time Point #01 data..."):
         render_timepoint_layout("T_01", "Time Point #01", authenticator)
+    status_placeholder.info("Your Time Point #01 results are ready for review!")
 
 def timepoint_02():
-    with st.spinner("Please wait while we update and display your Time Point #02 data......"):
+    status_placeholder = st.empty()
+    with st.spinner("Please wait while we update and display your Time Point #02 data..."):
         render_timepoint_layout("T_02", "Time Point #02", authenticator)
+    status_placeholder.info("Your Time Point #02 results are ready for review!")
 
 # Create pages with custom labels - Updated sidebar format
 welcome_st_page = st.Page(welcome_page, title=f"Welcome, {username.upper()}!")
